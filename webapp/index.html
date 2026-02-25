@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>My Route</title>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="logo">MR</div>
+          <div>
+            <div class="title">My Route</div>
+            <div class="subtitle" id="subtitle"></div>
+          </div>
+        </div>
+
+        <div class="lang">
+          <button class="chip" id="btnRu" type="button">RU</button>
+          <button class="chip" id="btnEn" type="button">EN</button>
+        </div>
+      </header>
+
+      <section class="card">
+        <h1 id="welcomeTitle"></h1>
+        <p id="welcomeText" class="muted"></p>
+
+        <ul class="list" id="featureList"></ul>
+
+        <button class="primary" id="startBtn" type="button"></button>
+        <p class="fineprint" id="priceNote"></p>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
