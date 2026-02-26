@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Optional, Literal, Dict, Any
 
-Budget = Literal["low", "medium", "high"]
+Budget = Literal["low", "medium", "high", "premium"]
 Pace = Literal["slow", "normal", "fast"]
-Companions = Literal["solo", "couple", "family"]
+Companions = Literal["solo", "couple", "family", "group"]
 
 class RouteRequest(BaseModel):
     language: Literal["ru", "en"] = "ru"

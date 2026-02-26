@@ -29,7 +29,6 @@
         </div>
       </header>
 
-      <!-- Screen: Welcome -->
       <section class="card" id="screenWelcome">
         <h1 id="welcomeTitle"></h1>
         <p id="welcomeText" class="muted"></p>
@@ -40,7 +39,6 @@
         <p class="fineprint" id="priceNote"></p>
       </section>
 
-      <!-- Screen: Form -->
       <section class="card hidden" id="screenForm">
         <div class="row">
           <h2 id="formTitle" class="h2"></h2>
@@ -70,6 +68,7 @@
             <option value="low" id="optBudgetLow"></option>
             <option value="medium" id="optBudgetMed"></option>
             <option value="high" id="optBudgetHigh"></option>
+            <option value="premium" id="optBudgetPremium"></option>
           </select>
         </label>
 
@@ -93,19 +92,20 @@
             <option value="solo" id="optCompSolo"></option>
             <option value="couple" id="optCompCouple"></option>
             <option value="family" id="optCompFamily"></option>
+            <option value="group" id="optCompGroup"></option>
           </select>
         </label>
 
         <label class="field">
           <span class="label" id="lblNotes"></span>
-          <textarea id="notes" class="input textarea" rows="3" placeholder=""></textarea>
+          <textarea id="notes" class="input textarea" rows="4" placeholder=""></textarea>
+          <div class="helper" id="notesHelper"></div>
         </label>
 
         <button class="primary" id="generateBtn" type="button"></button>
         <p class="fineprint" id="formHint"></p>
       </section>
 
-      <!-- Screen: Result -->
       <section class="card hidden" id="screenResult">
         <div class="row">
           <h2 class="h2" id="resultTitle"></h2>

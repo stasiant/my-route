@@ -26,6 +26,7 @@ const i18n = {
     optBudgetLow: "Эконом",
     optBudgetMed: "Средний",
     optBudgetHigh: "Комфорт",
+    optBudgetPremium: "Премиум",
     lblInterests: "Интересы",
     lblPace: "Темп",
     optPaceSlow: "Спокойно",
@@ -35,8 +36,11 @@ const i18n = {
     optCompSolo: "1 человек",
     optCompCouple: "Пара",
     optCompFamily: "Семья",
+    optCompGroup: "Компания",
     lblNotes: "Дополнительные пожелания",
     notesPh: "Например: люблю ходить пешком, без музеев, больше еды…",
+    notesHelper:
+      "Чем подробнее, тем лучше: отель/район, время подъёма, бюджет на день, предпочтения в еде, что исключить, как перемещаться (пешком/такси/авто), обязательные места.",
     generateBtn: "Сгенерировать",
     formHint: "Генерация занимает 5–15 секунд.",
 
@@ -72,6 +76,7 @@ const i18n = {
     optBudgetLow: "Low",
     optBudgetMed: "Medium",
     optBudgetHigh: "Comfort",
+    optBudgetPremium: "Premium",
     lblInterests: "Interests",
     lblPace: "Pace",
     optPaceSlow: "Slow",
@@ -81,8 +86,11 @@ const i18n = {
     optCompSolo: "Solo",
     optCompCouple: "Couple",
     optCompFamily: "Family",
+    optCompGroup: "Group",
     lblNotes: "Extra wishes",
     notesPh: "E.g., love walking, no museums, more food spots…",
+    notesHelper:
+      "Write as much detail as possible: hotel/area, wake-up time, daily budget, food preferences, what to exclude, how you move (walk/taxi/car), must-see places.",
     generateBtn: "Generate",
     formHint: "Generation takes 5–15 seconds.",
 
@@ -103,11 +111,13 @@ const INTERESTS = [
   { key: "nature", ru: "природа", en: "nature" },
   { key: "nightlife", ru: "ночная жизнь", en: "nightlife" },
   { key: "kids", ru: "дети", en: "kids" },
-  { key: "shopping", ru: "шопинг", en: "shopping" }
+  { key: "shopping", ru: "шопинг", en: "shopping" },
+  { key: "beach", ru: "пляжный отдых", en: "beach" },
+  { key: "business", ru: "деловая поездка", en: "business" }
 ];
 
 function getLang() {
-  return localStorage.getItem("lang") || "en"; // default EN
+  return localStorage.getItem("lang") || "en";
 }
 function setLang(lang) {
   localStorage.setItem("lang", lang);
@@ -115,11 +125,7 @@ function setLang(lang) {
 }
 
 function showScreen(name) {
-  const map = {
-    welcome: "screenWelcome",
-    form: "screenForm",
-    result: "screenResult"
-  };
+  const map = { welcome: "screenWelcome", form: "screenForm", result: "screenResult" };
   Object.values(map).forEach((id) => document.getElementById(id).classList.add("hidden"));
   document.getElementById(map[name]).classList.remove("hidden");
 }
@@ -170,7 +176,6 @@ function render() {
   document.getElementById("btnRu").classList.toggle("active", lang === "ru");
   document.getElementById("btnEn").classList.toggle("active", lang === "en");
 
-  // Form labels
   document.getElementById("formTitle").textContent = t.formTitle;
   document.getElementById("backBtn").textContent = t.backBtn;
   document.getElementById("lblDestination").textContent = t.lblDestination;
@@ -180,21 +185,27 @@ function render() {
   document.getElementById("optBudgetLow").textContent = t.optBudgetLow;
   document.getElementById("optBudgetMed").textContent = t.optBudgetMed;
   document.getElementById("optBudgetHigh").textContent = t.optBudgetHigh;
+  document.getElementById("optBudgetPremium").textContent = t.optBudgetPremium;
+
   document.getElementById("lblInterests").textContent = t.lblInterests;
   document.getElementById("lblPace").textContent = t.lblPace;
   document.getElementById("optPaceSlow").textContent = t.optPaceSlow;
   document.getElementById("optPaceNormal").textContent = t.optPaceNormal;
   document.getElementById("optPaceFast").textContent = t.optPaceFast;
+
   document.getElementById("lblCompanions").textContent = t.lblCompanions;
   document.getElementById("optCompSolo").textContent = t.optCompSolo;
   document.getElementById("optCompCouple").textContent = t.optCompCouple;
   document.getElementById("optCompFamily").textContent = t.optCompFamily;
+  document.getElementById("optCompGroup").textContent = t.optCompGroup;
+
   document.getElementById("lblNotes").textContent = t.lblNotes;
   document.getElementById("notes").placeholder = t.notesPh;
+  document.getElementById("notesHelper").textContent = t.notesHelper;
+
   document.getElementById("generateBtn").textContent = t.generateBtn;
   document.getElementById("formHint").textContent = t.formHint;
 
-  // Result labels
   document.getElementById("resultTitle").textContent = t.resultTitle;
   document.getElementById("newBtn").textContent = t.newBtn;
   document.getElementById("planTitle").textContent = t.planTitle;
@@ -255,7 +266,6 @@ async function generate() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
 
-    // render result
     document.getElementById("resultSummary").textContent = data.summary || "";
 
     const plan = document.getElementById("plan");
@@ -263,6 +273,7 @@ async function generate() {
     (data.daily_plan || []).forEach((d) => {
       const card = document.createElement("div");
       card.className = "dayCard";
+
       const title = document.createElement("div");
       title.className = "dayTitle";
       title.textContent = `Day ${d.day ?? ""}`.trim();
@@ -311,7 +322,6 @@ async function generate() {
   }
 }
 
-// wiring
 document.getElementById("btnRu").addEventListener("click", () => setLang("ru"));
 document.getElementById("btnEn").addEventListener("click", () => setLang("en"));
 
