@@ -8,7 +8,6 @@
     />
     <title>My Route</title>
 
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <link rel="stylesheet" href="./styles.css" />
@@ -30,7 +29,8 @@
         </div>
       </header>
 
-      <section class="card">
+      <!-- Screen: Welcome -->
+      <section class="card" id="screenWelcome">
         <h1 id="welcomeTitle"></h1>
         <p id="welcomeText" class="muted"></p>
 
@@ -38,6 +38,98 @@
 
         <button class="primary" id="startBtn" type="button"></button>
         <p class="fineprint" id="priceNote"></p>
+      </section>
+
+      <!-- Screen: Form -->
+      <section class="card hidden" id="screenForm">
+        <div class="row">
+          <h2 id="formTitle" class="h2"></h2>
+          <button class="link" id="backBtn" type="button"></button>
+        </div>
+
+        <label class="field">
+          <span class="label" id="lblDestination"></span>
+          <input id="destination" class="input" placeholder="e.g., Paris, France" />
+        </label>
+
+        <div class="grid2">
+          <label class="field">
+            <span class="label" id="lblDays"></span>
+            <input id="days" class="input" type="number" min="1" step="1" placeholder="3" />
+          </label>
+
+          <label class="field">
+            <span class="label" id="lblNights"></span>
+            <input id="nights" class="input" type="number" min="0" step="1" placeholder="2 (optional)" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="label" id="lblBudget"></span>
+          <select id="budget" class="input">
+            <option value="low" id="optBudgetLow"></option>
+            <option value="medium" id="optBudgetMed"></option>
+            <option value="high" id="optBudgetHigh"></option>
+          </select>
+        </label>
+
+        <div class="field">
+          <span class="label" id="lblInterests"></span>
+          <div class="chips" id="interests"></div>
+        </div>
+
+        <label class="field">
+          <span class="label" id="lblPace"></span>
+          <select id="pace" class="input">
+            <option value="slow" id="optPaceSlow"></option>
+            <option value="normal" id="optPaceNormal"></option>
+            <option value="fast" id="optPaceFast"></option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label" id="lblCompanions"></span>
+          <select id="companions" class="input">
+            <option value="solo" id="optCompSolo"></option>
+            <option value="couple" id="optCompCouple"></option>
+            <option value="family" id="optCompFamily"></option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label" id="lblNotes"></span>
+          <textarea id="notes" class="input textarea" rows="3" placeholder=""></textarea>
+        </label>
+
+        <button class="primary" id="generateBtn" type="button"></button>
+        <p class="fineprint" id="formHint"></p>
+      </section>
+
+      <!-- Screen: Result -->
+      <section class="card hidden" id="screenResult">
+        <div class="row">
+          <h2 class="h2" id="resultTitle"></h2>
+          <button class="link" id="newBtn" type="button"></button>
+        </div>
+
+        <div class="resultBlock">
+          <div class="muted" id="resultSummary"></div>
+        </div>
+
+        <div class="resultBlock">
+          <h3 class="h3" id="planTitle"></h3>
+          <div id="plan"></div>
+        </div>
+
+        <div class="resultBlock">
+          <h3 class="h3" id="tipsTitle"></h3>
+          <ul class="list" id="tips"></ul>
+        </div>
+
+        <div class="resultBlock">
+          <h3 class="h3" id="checklistTitle"></h3>
+          <ul class="list" id="checklist"></ul>
+        </div>
       </section>
     </main>
 
