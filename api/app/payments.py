@@ -23,11 +23,17 @@ def _bot_api(method: str, data: Dict[str, Any]) -> Any:
     return payload["result"]
 
 
-def create_stars_invoice_link(*, title: str, description: str, stars_amount: int, payload_data: Dict[str, Any]) -> str:
-    # payload в Telegram должен быть строкой
-    payload_str = json.dumps(payload_data, ensure_ascii=False)
+def create_stars_invoice_link(
+    *,
+    title: str,
+    description: str,
+    stars_amount: int,
+    payload: Any,  # может быть dict или str
+) -> str:
+    # Telegram требует payload строкой
+    payload_str = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False)
 
-    return _bot_api(
+    result = _bot_api(
         "createInvoiceLink",
         {
             "title": title,
@@ -37,3 +43,4 @@ def create_stars_invoice_link(*, title: str, description: str, stars_amount: int
             "prices": [{"label": title, "amount": int(stars_amount)}],
         },
     )
+    return result
