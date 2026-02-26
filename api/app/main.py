@@ -32,6 +32,10 @@ PAID: Dict[str, Dict[str, Any]] = {}
 # Optional: keep mapping order_id -> route_request (lost on restart)
 ORDERS: Dict[str, Dict[str, Any]] = {}
 
+# New: store payment status by order_id (lost on restart)
+# Key: order_id, Value: {"payment_id": "...", "order": {...}}
+PAID_ORDERS: Dict[str, Dict[str, Any]] = {}
+
 
 @app.get("/health")
 def health():
@@ -141,21 +145,34 @@ async def telegram_webhook(req: Request):
         payment_id = sp.get("telegram_payment_charge_id")
         invoice_payload = sp.get("invoice_payload")  # string payload we set in createInvoiceLink
 
+        # Extract order_id from payload "order:<id>"
+        order_id: Optional[str] = None
+        if isinstance(invoice_payload, str) and invoice_payload.startswith("order:"):
+            order_id = invoice_payload.split("order:", 1)[1]
+
+        # Store by payment_id (existing behavior)
         decoded: Dict[str, Any] = {}
-        if invoice_payload:
-            # Our payload is like "order:<id>"
-            if isinstance(invoice_payload, str) and invoice_payload.startswith("order:"):
-                order_id = invoice_payload.split("order:", 1)[1]
-                decoded = {"order_id": order_id, "order": ORDERS.get(order_id)}
-            else:
-                # fallback: try json (if you ever send json payloads)
-                try:
-                    decoded = json.loads(invoice_payload)
-                except Exception:
-                    decoded = {"raw_payload": invoice_payload}
+        if order_id:
+            decoded = {"order_id": order_id, "order": ORDERS.get(order_id)}
+        elif invoice_payload:
+            # fallback: try json (if you ever send json payloads)
+            try:
+                decoded = json.loads(invoice_payload)
+            except Exception:
+                decoded = {"raw_payload": invoice_payload}
 
         if payment_id:
             PAID[payment_id] = decoded
+
+        # New behavior: store by order_id so frontend can check with order_id
+        if order_id:
+            PAID_ORDERS[order_id] = {
+                "payment_id": payment_id,
+                "order": ORDERS.get(order_id),
+            }
+            logger.info("Payment success: order_id=%s payment_id=%s", order_id, payment_id)
+        else:
+            logger.warning("Payment success but order_id not found in invoice_payload=%s", invoice_payload)
 
         return {"ok": True}
 
@@ -171,6 +188,26 @@ class PayStatusResponse(BaseModel):
 def pay_status(payment_id: str):
     data = PAID.get(payment_id)
     return PayStatusResponse(paid=bool(data), data=data)
+
+
+class PayOrderStatusResponse(BaseModel):
+    order_id: str
+    paid: bool
+    payment_id: Optional[str] = None
+    order: Optional[Dict[str, Any]] = None
+
+
+@app.get("/pay/status-by-order/{order_id}", response_model=PayOrderStatusResponse)
+def pay_status_by_order(order_id: str):
+    rec = PAID_ORDERS.get(order_id)
+    if not rec:
+        return PayOrderStatusResponse(order_id=order_id, paid=False, order=ORDERS.get(order_id))
+    return PayOrderStatusResponse(
+        order_id=order_id,
+        paid=True,
+        payment_id=rec.get("payment_id"),
+        order=rec.get("order"),
+    )
 
 
 @app.options("/{path:path}")
