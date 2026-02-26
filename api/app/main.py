@@ -140,3 +140,8 @@ from fastapi.responses import Response
 @app.options("/{path:path}")
 async def options_handler(path: str):
     return Response(status_code=200)
+from fastapi.responses import Response
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return Response(status_code=200)
