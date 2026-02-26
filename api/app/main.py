@@ -135,3 +135,8 @@ class PayStatusResponse(BaseModel):
 def pay_status(payment_id: str):
     data = PAID.get(payment_id)
     return PayStatusResponse(paid=bool(data), data=data)
+from fastapi.responses import Response
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return Response(status_code=200)
