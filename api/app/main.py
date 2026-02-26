@@ -16,25 +16,18 @@ logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="My Route API", version="0.1.0")
 
-# Allow WebApp to call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for MVP; later restrict to your domain
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# MVP: store paid invoice payloads in memory (lost on restart)
-# Key: telegram_payment_charge_id, Value: decoded invoice payload dict
-PAID: Dict[str, Dict[str, Any]] = {}
-
-# Optional: keep mapping order_id -> route_request (lost on restart)
-ORDERS: Dict[str, Dict[str, Any]] = {}
-
-# New: store payment status by order_id (lost on restart)
-# Key: order_id, Value: {"payment_id": "...", "order": {...}}
-PAID_ORDERS: Dict[str, Dict[str, Any]] = {}
+# In-memory storages (lost on restart/deploy)
+PAID: Dict[str, Dict[str, Any]] = {}        # payment_id -> decoded
+ORDERS: Dict[str, Dict[str, Any]] = {}      # order_id -> order data
+PAID_ORDERS: Dict[str, Dict[str, Any]] = {} # order_id -> {"payment_id":..., "order":...}
 
 
 @app.get("/health")
@@ -44,7 +37,6 @@ def health():
 
 @app.post("/route/generate", response_model=RouteResponse)
 def generate_route(req: RouteRequest):
-    # Demo implementation (stub). Later you replace with real generation.
     return RouteResponse(
         summary=f"Demo route for: {req.destination} ({req.days} days)",
         daily_plan=[
@@ -88,11 +80,9 @@ def pay_create_invoice(body: CreateInvoiceRequest):
         title = "My Route: 1 itinerary"
         description = "Payment for generating 1 itinerary"
 
-    # Create short valid payload for Telegram
     order_id = uuid.uuid4().hex
     telegram_payload = f"order:{order_id}"
 
-    # Store order data in memory (MVP)
     ORDERS[order_id] = {
         "type": "route_generation",
         "stars_amount": body.stars_amount,
@@ -112,7 +102,7 @@ def pay_create_invoice(body: CreateInvoiceRequest):
         title=title,
         description=description,
         stars_amount=body.stars_amount,
-        payload=telegram_payload,  # IMPORTANT: short string payload
+        payload=telegram_payload,
     )
     return CreateInvoiceResponse(invoice_link=invoice_link, order_id=order_id)
 
@@ -143,19 +133,16 @@ async def telegram_webhook(req: Request):
     if msg and msg.get("successful_payment"):
         sp = msg["successful_payment"]
         payment_id = sp.get("telegram_payment_charge_id")
-        invoice_payload = sp.get("invoice_payload")  # string payload we set in createInvoiceLink
+        invoice_payload = sp.get("invoice_payload")
 
-        # Extract order_id from payload "order:<id>"
         order_id: Optional[str] = None
         if isinstance(invoice_payload, str) and invoice_payload.startswith("order:"):
             order_id = invoice_payload.split("order:", 1)[1]
 
-        # Store by payment_id (existing behavior)
         decoded: Dict[str, Any] = {}
         if order_id:
             decoded = {"order_id": order_id, "order": ORDERS.get(order_id)}
         elif invoice_payload:
-            # fallback: try json (if you ever send json payloads)
             try:
                 decoded = json.loads(invoice_payload)
             except Exception:
@@ -164,7 +151,6 @@ async def telegram_webhook(req: Request):
         if payment_id:
             PAID[payment_id] = decoded
 
-        # New behavior: store by order_id so frontend can check with order_id
         if order_id:
             PAID_ORDERS[order_id] = {
                 "payment_id": payment_id,
@@ -207,6 +193,40 @@ def pay_status_by_order(order_id: str):
         paid=True,
         payment_id=rec.get("payment_id"),
         order=rec.get("order"),
+    )
+
+
+# ----- DEV ONLY: mock payment success (no real Stars) -----
+
+
+class MockPayRequest(BaseModel):
+    secret: str
+
+
+@app.post("/pay/mock-success/{order_id}", response_model=PayOrderStatusResponse)
+def pay_mock_success(order_id: str, body: MockPayRequest):
+    expected = os.getenv("MOCK_PAY_SECRET", "")
+    if not expected:
+        raise HTTPException(500, "MOCK_PAY_SECRET is not set")
+    if body.secret != expected:
+        raise HTTPException(403, "forbidden")
+
+    order = ORDERS.get(order_id)
+    if not order:
+        raise HTTPException(404, "order not found (create invoice first)")
+
+    fake_payment_id = f"mock_{uuid.uuid4().hex}"
+
+    PAID[fake_payment_id] = {"order_id": order_id, "order": order, "mock": True}
+    PAID_ORDERS[order_id] = {"payment_id": fake_payment_id, "order": order}
+
+    logger.info("MOCK payment success: order_id=%s payment_id=%s", order_id, fake_payment_id)
+
+    return PayOrderStatusResponse(
+        order_id=order_id,
+        paid=True,
+        payment_id=fake_payment_id,
+        order=order,
     )
 
 
