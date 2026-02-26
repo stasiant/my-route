@@ -9,6 +9,7 @@ import json
 import os
 import requests
 
+from app.ai import generate_route_with_gpt
 from app.schemas import RouteRequest, RouteResponse
 from app.payments import create_stars_invoice_link
 
@@ -25,10 +26,10 @@ app.add_middleware(
 )
 
 # In-memory storages (lost on restart/deploy)
-PAID: Dict[str, Dict[str, Any]] = {}        # payment_id -> decoded
-ORDERS: Dict[str, Dict[str, Any]] = {}      # order_id -> order data
-PAID_ORDERS: Dict[str, Dict[str, Any]] = {} # order_id -> {"payment_id":..., "order":...}
-USED_ORDERS: Dict[str, bool] = {}           # order_id -> used once
+PAID: Dict[str, Dict[str, Any]] = {}         # payment_id -> decoded
+ORDERS: Dict[str, Dict[str, Any]] = {}       # order_id -> order data
+PAID_ORDERS: Dict[str, Dict[str, Any]] = {}  # order_id -> {"payment_id":..., "order":...}
+USED_ORDERS: Dict[str, bool] = {}            # order_id -> used once
 
 
 @app.get("/health")
@@ -37,22 +38,8 @@ def health():
 
 
 def _generate_demo_route(req: RouteRequest) -> RouteResponse:
-    # Current demo implementation (same as /route/generate)
-    return RouteResponse(
-        summary=f"Demo route for: {req.destination} ({req.days} days)",
-        daily_plan=[
-            {
-                "day": 1,
-                "morning": ["City walk", "Main square"],
-                "afternoon": ["Museum", "Park"],
-                "evening": ["Dinner area", "Sunset viewpoint"],
-            }
-        ],
-        food=[{"name": "Local cafe", "type": "budget-friendly"}],
-        tips=["Buy a transport card", "Book popular museums in advance"],
-        budget_notes=f"Budget level: {req.budget}",
-        checklist=["Passport", "Insurance", "Power adapter"],
-    )
+    # Теперь это реальная генерация через GPT
+    return generate_route_with_gpt(req)
 
 
 @app.post("/route/generate", response_model=RouteResponse)
