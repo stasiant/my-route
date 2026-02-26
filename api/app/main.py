@@ -2,12 +2,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 import logging
 import uuid
 import json
 import os
 import requests
+print("ENV CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
 from app.ai import generate_route_with_gpt
 from app.schemas import RouteRequest, RouteResponse
@@ -17,12 +18,32 @@ logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="My Route API", version="0.1.0")
 
+logger.info("ENV CORS_ORIGINS=%s", os.getenv("CORS_ORIGINS"))
+def _get_cors_origins() -> List[str]:
+    """
+    В проде лучше задавать через env:
+      CORS_ORIGINS="https://your-miniapp.onrender.com,https://your-domain.com"
+    Локально оставляем localhost.
+    """
+    env_val = (os.getenv("CORS_ORIGINS") or "").strip()
+    if env_val:
+        return [x.strip() for x in env_val.split(",") if x.strip()]
+
+    # defaults for local dev
+    return [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+    ]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_get_cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"],  # нужно для X-Telegram-InitData
 )
 
 # In-memory storages (lost on restart/deploy)
@@ -38,7 +59,6 @@ def health():
 
 
 def _generate_demo_route(req: RouteRequest) -> RouteResponse:
-    # Теперь это реальная генерация через GPT
     return generate_route_with_gpt(req)
 
 
@@ -83,7 +103,6 @@ def pay_create_invoice(body: CreateInvoiceRequest):
         "route_request": body.route_request.model_dump(),
     }
 
-    # Reset used flag if the same id ever reappears (just in case)
     USED_ORDERS.pop(order_id, None)
 
     logger.info(
@@ -107,7 +126,7 @@ def pay_create_invoice(body: CreateInvoiceRequest):
 async def telegram_webhook(req: Request):
     update = await req.json()
 
-    # 1) Pre-checkout query must be answered, иначе оплата не пройдет
+    # 1) Pre-checkout query must be answered
     if "pre_checkout_query" in update:
         pcq = update["pre_checkout_query"]
 
@@ -221,14 +240,12 @@ def generate_route_by_order(order_id: str):
 
     order = ORDERS.get(order_id)
     if not order:
-        # could happen after restart; keep message explicit
         raise HTTPException(404, "order not found (server restarted or order expired)")
 
     rr = order.get("route_request")
     if not isinstance(rr, dict):
         raise HTTPException(500, "order.route_request missing")
 
-    # Convert dict -> RouteRequest model
     try:
         req_model = RouteRequest.model_validate(rr)
     except Exception as e:
@@ -236,7 +253,6 @@ def generate_route_by_order(order_id: str):
 
     route = _generate_demo_route(req_model)
 
-    # Mark as used to prevent unlimited generations per one payment
     USED_ORDERS[order_id] = True
 
     return GenerateByOrderResponse(
@@ -270,7 +286,6 @@ def pay_mock_success(order_id: str, body: MockPayRequest):
     PAID[fake_payment_id] = {"order_id": order_id, "order": order, "mock": True}
     PAID_ORDERS[order_id] = {"payment_id": fake_payment_id, "order": order}
 
-    # allow generating again when you re-mock (optional)
     USED_ORDERS.pop(order_id, None)
 
     logger.info("MOCK payment success: order_id=%s payment_id=%s", order_id, fake_payment_id)
@@ -284,6 +299,9 @@ def pay_mock_success(order_id: str, body: MockPayRequest):
     )
 
 
+# NOTE:
+# Отдельный app.options("/{path:path}") обычно НЕ нужен, CORSMiddleware сам отвечает на preflight OPTIONS.
+# Но если хочешь оставить — можно, он не помешает.
 @app.options("/{path:path}")
 async def options_handler(path: str):
     return Response(status_code=200)
