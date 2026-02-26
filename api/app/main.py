@@ -28,6 +28,7 @@ app.add_middleware(
 PAID: Dict[str, Dict[str, Any]] = {}        # payment_id -> decoded
 ORDERS: Dict[str, Dict[str, Any]] = {}      # order_id -> order data
 PAID_ORDERS: Dict[str, Dict[str, Any]] = {} # order_id -> {"payment_id":..., "order":...}
+USED_ORDERS: Dict[str, bool] = {}           # order_id -> used once
 
 
 @app.get("/health")
@@ -35,8 +36,8 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/route/generate", response_model=RouteResponse)
-def generate_route(req: RouteRequest):
+def _generate_demo_route(req: RouteRequest) -> RouteResponse:
+    # Current demo implementation (same as /route/generate)
     return RouteResponse(
         summary=f"Demo route for: {req.destination} ({req.days} days)",
         daily_plan=[
@@ -52,6 +53,11 @@ def generate_route(req: RouteRequest):
         budget_notes=f"Budget level: {req.budget}",
         checklist=["Passport", "Insurance", "Power adapter"],
     )
+
+
+@app.post("/route/generate", response_model=RouteResponse)
+def generate_route(req: RouteRequest):
+    return _generate_demo_route(req)
 
 
 # ----- Payments -----
@@ -89,6 +95,9 @@ def pay_create_invoice(body: CreateInvoiceRequest):
         "lang": body.lang,
         "route_request": body.route_request.model_dump(),
     }
+
+    # Reset used flag if the same id ever reappears (just in case)
+    USED_ORDERS.pop(order_id, None)
 
     logger.info(
         "pay_create_invoice: order_id=%s stars_amount=%s lang=%s route_request=%s",
@@ -181,18 +190,72 @@ class PayOrderStatusResponse(BaseModel):
     paid: bool
     payment_id: Optional[str] = None
     order: Optional[Dict[str, Any]] = None
+    used: Optional[bool] = None
 
 
 @app.get("/pay/status-by-order/{order_id}", response_model=PayOrderStatusResponse)
 def pay_status_by_order(order_id: str):
     rec = PAID_ORDERS.get(order_id)
+    used = bool(USED_ORDERS.get(order_id))
     if not rec:
-        return PayOrderStatusResponse(order_id=order_id, paid=False, order=ORDERS.get(order_id))
+        return PayOrderStatusResponse(
+            order_id=order_id,
+            paid=False,
+            payment_id=None,
+            order=ORDERS.get(order_id),
+            used=used,
+        )
     return PayOrderStatusResponse(
         order_id=order_id,
         paid=True,
         payment_id=rec.get("payment_id"),
         order=rec.get("order"),
+        used=used,
+    )
+
+
+# ----- New: generate route by order_id (requires paid) -----
+
+
+class GenerateByOrderResponse(BaseModel):
+    order_id: str
+    payment_id: str
+    route: RouteResponse
+
+
+@app.post("/route/generate-by-order/{order_id}", response_model=GenerateByOrderResponse)
+def generate_route_by_order(order_id: str):
+    paid_rec = PAID_ORDERS.get(order_id)
+    if not paid_rec:
+        raise HTTPException(402, "not paid")
+
+    if USED_ORDERS.get(order_id):
+        raise HTTPException(409, "order already used")
+
+    order = ORDERS.get(order_id)
+    if not order:
+        # could happen after restart; keep message explicit
+        raise HTTPException(404, "order not found (server restarted or order expired)")
+
+    rr = order.get("route_request")
+    if not isinstance(rr, dict):
+        raise HTTPException(500, "order.route_request missing")
+
+    # Convert dict -> RouteRequest model
+    try:
+        req_model = RouteRequest.model_validate(rr)
+    except Exception as e:
+        raise HTTPException(500, f"invalid route_request in order: {e}")
+
+    route = _generate_demo_route(req_model)
+
+    # Mark as used to prevent unlimited generations per one payment
+    USED_ORDERS[order_id] = True
+
+    return GenerateByOrderResponse(
+        order_id=order_id,
+        payment_id=paid_rec.get("payment_id") or "",
+        route=route,
     )
 
 
@@ -220,6 +283,9 @@ def pay_mock_success(order_id: str, body: MockPayRequest):
     PAID[fake_payment_id] = {"order_id": order_id, "order": order, "mock": True}
     PAID_ORDERS[order_id] = {"payment_id": fake_payment_id, "order": order}
 
+    # allow generating again when you re-mock (optional)
+    USED_ORDERS.pop(order_id, None)
+
     logger.info("MOCK payment success: order_id=%s payment_id=%s", order_id, fake_payment_id)
 
     return PayOrderStatusResponse(
@@ -227,6 +293,7 @@ def pay_mock_success(order_id: str, body: MockPayRequest):
         paid=True,
         payment_id=fake_payment_id,
         order=order,
+        used=False,
     )
 
 
