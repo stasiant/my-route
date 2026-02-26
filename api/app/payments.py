@@ -3,15 +3,18 @@ import json
 import requests
 from typing import Any, Dict
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 
-def _bot_api(method: str, data: Dict[str, Any]) -> Dict[str, Any]:
-    if not BOT_TOKEN:
+def _bot_api(method: str, data: Dict[str, Any]) -> Any:
+    bot_token = os.getenv("BOT_TOKEN", "")
+    if not bot_token:
         raise RuntimeError("BOT_TOKEN is not set")
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
+    url = f"https://api.telegram.org/bot{bot_token}/{method}"
     r = requests.post(url, json=data, timeout=20)
-    r.raise_for_status()
+
+    # ВАЖНО: покажем реальную причину 400/401 и т.п.
+    if not r.ok:
+        raise RuntimeError(f"Telegram API error {r.status_code}: {r.text}")
 
     payload = r.json()
     if not payload.get("ok"):
@@ -19,17 +22,18 @@ def _bot_api(method: str, data: Dict[str, Any]) -> Dict[str, Any]:
 
     return payload["result"]
 
-def create_stars_invoice_link(title: str, description: str, stars_amount: int, payload: Dict[str, Any]) -> str:
-    # currency for Telegram Stars is XTR, amount is in STARS (integer)
-    invoice_payload = json.dumps(payload, ensure_ascii=False)
 
-    result = _bot_api("createInvoiceLink", {
-        "title": title,
-        "description": description,
-        "payload": invoice_payload,
-        "currency": "XTR",
-        "prices": [{"label": title, "amount": int(stars_amount)}],
-    })
+def create_stars_invoice_link(*, title: str, description: str, stars_amount: int, payload_data: Dict[str, Any]) -> str:
+    # payload в Telegram должен быть строкой
+    payload_str = json.dumps(payload_data, ensure_ascii=False)
 
-    # createInvoiceLink returns the link string
-    return result
+    return _bot_api(
+        "createInvoiceLink",
+        {
+            "title": title,
+            "description": description,
+            "payload": payload_str,
+            "currency": "XTR",
+            "prices": [{"label": title, "amount": int(stars_amount)}],
+        },
+    )
