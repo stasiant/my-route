@@ -70,6 +70,15 @@ def pay_create_invoice(body: CreateInvoiceRequest):
     else:
         title = "My Route: 1 itinerary"
         description = "Payment for generating 1 itinerary"
+import logging
+logger = logging.getLogger("uvicorn.error")
+
+logger.info(
+    "pay_create_invoice: stars_amount=%s lang=%s route_request=%s",
+    body.stars_amount,
+    body.lang,
+    body.route_request,
+)
 
     invoice_link = create_stars_invoice_link(
         title=title,
