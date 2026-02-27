@@ -11,26 +11,24 @@ import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app.ai import generate_route_with_gpt
 from app.payments import create_stars_invoice_link
 from app.schemas import RouteRequest, RouteResponse
 
-# 1) .env полезен локально. На Render переменные задаются в Environment.
+# .env полезен локально. На Render переменные задаются в Environment.
 load_dotenv()
 
 logger = logging.getLogger("uvicorn.error")
-
-app = FastAPI(title="My Route API", version="0.2.0")
+app = FastAPI(title="My Route API", version="0.3.0")
 
 
 def _get_cors_origins() -> List[str]:
     """
-    Для Telegram WebApp чаще всего origin будет 'https://web.telegram.org'
-    и/или домен, на котором хостится твой фронт (например GitHub Pages/Render Static).
-    Поэтому CORS_ORIGINS лучше задавать через переменную окружения на Render.
+    ВАЖНО: для Telegram WebView preflight CORS должен пройти.
+    Поэтому origins лучше задавать на Render через CORS_ORIGINS, например:
+      https://web.telegram.org,https://t.me,https://<твой-фронт-домен>
     """
     env_val = (os.getenv("CORS_ORIGINS") or "").strip()
     if env_val:
@@ -42,15 +40,17 @@ def _get_cors_origins() -> List[str]:
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://localhost:3000",
-        # можно временно добавить Telegram origin, чтобы не ловить CORS (лучше через env)
         "https://web.telegram.org",
+        "https://t.me",
     ]
 
 
+# ВАЖНО: НЕ добавляй свой @app.options(...) handler.
+# CORSMiddleware сам корректно отвечает на OPTIONS preflight.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_get_cors_origins(),
-    allow_credentials=False,
+    allow_credentials=True,  # для Telegram/WebView зачастую безопаснее включить
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -76,13 +76,11 @@ def _require_env(name: str) -> str:
 
 
 def _generate_route(req: RouteRequest) -> RouteResponse:
-    # 2) Явно проверяем ключ (чтобы 500 было понятным)
     _require_env("OPENAI_API_KEY")
 
     route = generate_route_with_gpt(req)
 
-    # 3) Гарантия, что map_points всегда есть (даже если геокодинг ничего не нашёл)
-    # Это важно для фронта: он ожидает data.map_points.
+    # гарантируем, что map_points всегда массив
     if getattr(route, "map_points", None) is None:
         route.map_points = []
 
@@ -94,8 +92,7 @@ def generate_route(req: RouteRequest):
     return _generate_route(req)
 
 
-# ----- Payments (как у тебя, но без лишних вещей) -----
-
+# ----- Payments -----
 # In-memory storages (потеряются при рестарте/деплое)
 PAID: Dict[str, Dict[str, Any]] = {}
 ORDERS: Dict[str, Dict[str, Any]] = {}
@@ -264,8 +261,3 @@ def generate_route_by_order(order_id: str):
         payment_id=paid_rec.get("payment_id") or "",
         route=route,
     )
-
-
-@app.options("/{path:path}")
-async def options_handler(path: str):
-    return Response(status_code=200)
