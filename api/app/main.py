@@ -1,40 +1,49 @@
+# api/app/main.py
+from __future__ import annotations
+
+import json
+import logging
+import os
+import uuid
+from typing import Any, Dict, List, Optional
+
+import requests
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
-from typing import Any, Dict, Optional, List
-import logging
-import uuid
-import json
-import os
-import requests
-print("ENV CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
 from app.ai import generate_route_with_gpt
-from app.schemas import RouteRequest, RouteResponse
 from app.payments import create_stars_invoice_link
+from app.schemas import RouteRequest, RouteResponse
+
+# 1) .env полезен локально. На Render переменные задаются в Environment.
+load_dotenv()
 
 logger = logging.getLogger("uvicorn.error")
 
-app = FastAPI(title="My Route API", version="0.1.0")
+app = FastAPI(title="My Route API", version="0.2.0")
 
-logger.info("ENV CORS_ORIGINS=%s", os.getenv("CORS_ORIGINS"))
+
 def _get_cors_origins() -> List[str]:
     """
-    В проде лучше задавать через env:
-      CORS_ORIGINS="https://your-miniapp.onrender.com,https://your-domain.com"
-    Локально оставляем localhost.
+    Для Telegram WebApp чаще всего origin будет 'https://web.telegram.org'
+    и/или домен, на котором хостится твой фронт (например GitHub Pages/Render Static).
+    Поэтому CORS_ORIGINS лучше задавать через переменную окружения на Render.
     """
     env_val = (os.getenv("CORS_ORIGINS") or "").strip()
     if env_val:
         return [x.strip() for x in env_val.split(",") if x.strip()]
 
-    # defaults for local dev
+    # дефолты для локальной разработки
     return [
         "http://127.0.0.1:5173",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://localhost:3000",
+        # можно временно добавить Telegram origin, чтобы не ловить CORS (лучше через env)
+        "https://web.telegram.org",
     ]
 
 
@@ -43,14 +52,8 @@ app.add_middleware(
     allow_origins=_get_cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"],  # нужно для X-Telegram-InitData
+    allow_headers=["*"],
 )
-
-# In-memory storages (lost on restart/deploy)
-PAID: Dict[str, Dict[str, Any]] = {}         # payment_id -> decoded
-ORDERS: Dict[str, Dict[str, Any]] = {}       # order_id -> order data
-PAID_ORDERS: Dict[str, Dict[str, Any]] = {}  # order_id -> {"payment_id":..., "order":...}
-USED_ORDERS: Dict[str, bool] = {}            # order_id -> used once
 
 
 @app.get("/health")
@@ -58,16 +61,46 @@ def health():
     return {"status": "ok"}
 
 
-def _generate_demo_route(req: RouteRequest) -> RouteResponse:
-    return generate_route_with_gpt(req)
+@app.on_event("startup")
+def _startup_logs() -> None:
+    logger.info("ENV CORS_ORIGINS=%s", os.getenv("CORS_ORIGINS"))
+    logger.info("ENV OPENAI_API_KEY set=%s", bool((os.getenv("OPENAI_API_KEY") or "").strip()))
+    logger.info("ENV OPENAI_MODEL=%s", os.getenv("OPENAI_MODEL"))
+
+
+def _require_env(name: str) -> str:
+    val = (os.getenv(name) or "").strip()
+    if not val:
+        raise HTTPException(500, f"{name} is not set")
+    return val
+
+
+def _generate_route(req: RouteRequest) -> RouteResponse:
+    # 2) Явно проверяем ключ (чтобы 500 было понятным)
+    _require_env("OPENAI_API_KEY")
+
+    route = generate_route_with_gpt(req)
+
+    # 3) Гарантия, что map_points всегда есть (даже если геокодинг ничего не нашёл)
+    # Это важно для фронта: он ожидает data.map_points.
+    if getattr(route, "map_points", None) is None:
+        route.map_points = []
+
+    return route
 
 
 @app.post("/route/generate", response_model=RouteResponse)
 def generate_route(req: RouteRequest):
-    return _generate_demo_route(req)
+    return _generate_route(req)
 
 
-# ----- Payments -----
+# ----- Payments (как у тебя, но без лишних вещей) -----
+
+# In-memory storages (потеряются при рестарте/деплое)
+PAID: Dict[str, Dict[str, Any]] = {}
+ORDERS: Dict[str, Dict[str, Any]] = {}
+PAID_ORDERS: Dict[str, Dict[str, Any]] = {}
+USED_ORDERS: Dict[str, bool] = {}
 
 
 class CreateInvoiceRequest(BaseModel):
@@ -102,16 +135,7 @@ def pay_create_invoice(body: CreateInvoiceRequest):
         "lang": body.lang,
         "route_request": body.route_request.model_dump(),
     }
-
     USED_ORDERS.pop(order_id, None)
-
-    logger.info(
-        "pay_create_invoice: order_id=%s stars_amount=%s lang=%s route_request=%s",
-        order_id,
-        body.stars_amount,
-        body.lang,
-        body.route_request,
-    )
 
     invoice_link = create_stars_invoice_link(
         title=title,
@@ -126,24 +150,17 @@ def pay_create_invoice(body: CreateInvoiceRequest):
 async def telegram_webhook(req: Request):
     update = await req.json()
 
-    # 1) Pre-checkout query must be answered
+    # pre_checkout_query
     if "pre_checkout_query" in update:
         pcq = update["pre_checkout_query"]
-
-        token = os.getenv("BOT_TOKEN", "")
-        if not token:
-            raise HTTPException(500, "BOT_TOKEN missing")
+        token = _require_env("BOT_TOKEN")
 
         url = f"https://api.telegram.org/bot{token}/answerPreCheckoutQuery"
-        r = requests.post(
-            url,
-            json={"pre_checkout_query_id": pcq["id"], "ok": True},
-            timeout=20,
-        )
+        r = requests.post(url, json={"pre_checkout_query_id": pcq["id"], "ok": True}, timeout=20)
         r.raise_for_status()
         return {"ok": True}
 
-    # 2) Successful payment arrives in message.successful_payment
+    # successful_payment
     msg = update.get("message") or update.get("edited_message")
     if msg and msg.get("successful_payment"):
         sp = msg["successful_payment"]
@@ -165,15 +182,8 @@ async def telegram_webhook(req: Request):
 
         if payment_id:
             PAID[payment_id] = decoded
-
         if order_id:
-            PAID_ORDERS[order_id] = {
-                "payment_id": payment_id,
-                "order": ORDERS.get(order_id),
-            }
-            logger.info("Payment success: order_id=%s payment_id=%s", order_id, payment_id)
-        else:
-            logger.warning("Payment success but order_id not found in invoice_payload=%s", invoice_payload)
+            PAID_ORDERS[order_id] = {"payment_id": payment_id, "order": ORDERS.get(order_id)}
 
         return {"ok": True}
 
@@ -203,6 +213,7 @@ class PayOrderStatusResponse(BaseModel):
 def pay_status_by_order(order_id: str):
     rec = PAID_ORDERS.get(order_id)
     used = bool(USED_ORDERS.get(order_id))
+
     if not rec:
         return PayOrderStatusResponse(
             order_id=order_id,
@@ -211,6 +222,7 @@ def pay_status_by_order(order_id: str):
             order=ORDERS.get(order_id),
             used=used,
         )
+
     return PayOrderStatusResponse(
         order_id=order_id,
         paid=True,
@@ -218,9 +230,6 @@ def pay_status_by_order(order_id: str):
         order=rec.get("order"),
         used=used,
     )
-
-
-# ----- New: generate route by order_id (requires paid) -----
 
 
 class GenerateByOrderResponse(BaseModel):
@@ -234,7 +243,6 @@ def generate_route_by_order(order_id: str):
     paid_rec = PAID_ORDERS.get(order_id)
     if not paid_rec:
         raise HTTPException(402, "not paid")
-
     if USED_ORDERS.get(order_id):
         raise HTTPException(409, "order already used")
 
@@ -246,12 +254,8 @@ def generate_route_by_order(order_id: str):
     if not isinstance(rr, dict):
         raise HTTPException(500, "order.route_request missing")
 
-    try:
-        req_model = RouteRequest.model_validate(rr)
-    except Exception as e:
-        raise HTTPException(500, f"invalid route_request in order: {e}")
-
-    route = _generate_demo_route(req_model)
+    req_model = RouteRequest.model_validate(rr)
+    route = _generate_route(req_model)
 
     USED_ORDERS[order_id] = True
 
@@ -262,46 +266,6 @@ def generate_route_by_order(order_id: str):
     )
 
 
-# ----- DEV ONLY: mock payment success (no real Stars) -----
-
-
-class MockPayRequest(BaseModel):
-    secret: str
-
-
-@app.post("/pay/mock-success/{order_id}", response_model=PayOrderStatusResponse)
-def pay_mock_success(order_id: str, body: MockPayRequest):
-    expected = os.getenv("MOCK_PAY_SECRET", "")
-    if not expected:
-        raise HTTPException(500, "MOCK_PAY_SECRET is not set")
-    if body.secret != expected:
-        raise HTTPException(403, "forbidden")
-
-    order = ORDERS.get(order_id)
-    if not order:
-        raise HTTPException(404, "order not found (create invoice first)")
-
-    fake_payment_id = f"mock_{uuid.uuid4().hex}"
-
-    PAID[fake_payment_id] = {"order_id": order_id, "order": order, "mock": True}
-    PAID_ORDERS[order_id] = {"payment_id": fake_payment_id, "order": order}
-
-    USED_ORDERS.pop(order_id, None)
-
-    logger.info("MOCK payment success: order_id=%s payment_id=%s", order_id, fake_payment_id)
-
-    return PayOrderStatusResponse(
-        order_id=order_id,
-        paid=True,
-        payment_id=fake_payment_id,
-        order=order,
-        used=False,
-    )
-
-
-# NOTE:
-# Отдельный app.options("/{path:path}") обычно НЕ нужен, CORSMiddleware сам отвечает на preflight OPTIONS.
-# Но если хочешь оставить — можно, он не помешает.
 @app.options("/{path:path}")
 async def options_handler(path: str):
     return Response(status_code=200)
