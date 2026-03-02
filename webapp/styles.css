@@ -148,3 +148,41 @@ body {
   font-weight: 700;
   color: #000; /* Ярко-черный для названия */
 }
+
+/* --- СТИЛИ ДЛЯ HTML-СТАТЬИ --- */
+
+.day-block {
+  margin-bottom: 50px;
+}
+
+.day-header {
+  font-size: 26px;
+  font-weight: 800;
+  border-bottom: 2px solid #000;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+/* Это заголовки мест (Красная площадь, Лувр и т.д.) */
+.day-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+/* Это основной текст описания */
+.day-content p {
+  font-size: 16px;
+  line-height: 1.7; /* Удобно читать */
+  color: #333;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* Жирный текст внутри описания (Цены, Часы работы) */
+.day-content b {
+  color: #000;
+  font-weight: 700;
+}
