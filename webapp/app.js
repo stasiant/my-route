@@ -10,24 +10,14 @@ function showScreen(screenId) {
 
 // Умное форматирование текста
 function formatParagraph(text) {
-  // 1. Убираем слова Утро, День, Вечер
   let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
   
-  // 2. Если ИИ прислал текст со звездочками (Markdown)
   if (clean.includes('**') || clean.includes('*')) {
     clean = clean.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
-  } 
-  // 3. Если ИИ прислал просто текст, мы искусственно делаем первое предложение жирным (как название места)
-  else {
+  } else {
     const parts = clean.split('. ');
     if (parts.length > 1 && parts[0].length < 70) {
       clean = `<b>${parts[0]}.</b> ` + parts.slice(1).join('. ');
-    } else if (parts.length === 1) {
-      // Если предложение всего одно, выделяем первые несколько слов
-      const words = clean.split(' ');
-      if (words.length > 3) {
-        clean = `<b>${words.slice(0, 3).join(' ')}</b> ${words.slice(3).join(' ')}`;
-      }
     }
   }
   return clean;
@@ -36,19 +26,14 @@ function formatParagraph(text) {
 // Генерация HTML статьи
 function buildArticle(data) {
   let html = '';
-  
   if (data.daily_plan && Array.isArray(data.daily_plan)) {
     data.daily_plan.forEach(day => {
-      // Заголовок дня
       html += `<h2 class="day-title">День ${day.day}</h2>`;
-      
-      // Собираем все активности дня в один массив
       const activities = [];
       if (day.morning) activities.push(...day.morning);
       if (day.afternoon) activities.push(...day.afternoon);
       if (day.evening) activities.push(...day.evening);
 
-      // Рисуем список
       if (activities.length > 0) {
         html += `<ul class="article-list">`;
         activities.forEach(act => {
@@ -72,12 +57,25 @@ async function generate() {
   }
   
   btn.disabled = true;
-  btn.textContent = "Составляю путеводитель (≈20 сек)...";
+  btn.textContent = "Пишу огромный лонгрид (≈30 сек)...";
   
   try {
     const userNotes = document.getElementById("notes").value;
-    // Жесткий промпт
-    const promptInjection = " (ПРАВИЛО: Напиши ОЧЕНЬ ПОДРОБНО. Для каждой точки маршрута пиши минимум 3-4 предложения с историей и деталями. Обязательно выделяй название каждого места двойными звездочками **Вот так**. Не пиши списком дел, пиши как увлекательную статью в журнал.)";
+    
+    // === СУПЕР-ЖЕСТКИЙ ПРОМПТ ДЛЯ ИИ ===
+    // Эта скрытая инструкция заставит ИИ писать как книгу.
+    const hackPrompt = `
+      [ВНИМАНИЕ, СИСТЕМНОЕ ПРАВИЛО: ПИШИ ОГРОМНЫЙ ТЕКСТ. 
+      ЗАПРЕЩЕНО отвечать короткими предложениями. Это должен быть детализированный лонгрид. 
+      Для КАЖДОГО места ты ОБЯЗАН написать минимум 80-150 слов сплошным текстом. 
+      Для КАЖДОЙ локации обязательно укажи:
+      1. Глубокую историю и описание места.
+      2. Точные или примерные цены (на билеты, экскурсии, средний чек в кафе).
+      3. Часы работы (когда открыты кассы, во сколько лучше приходить).
+      4. Логистику: как добраться от предыдущей точки (какое метро, сколько минут идти пешком).
+      5. Секретные советы.
+      Формат: **Название места**. И далее длинный, подробный, увлекательный рассказ. Не сокращай!]
+    `;
 
     const payload = {
       language: "ru",
@@ -87,7 +85,7 @@ async function generate() {
       pace: document.getElementById("pace").value,
       companions: document.getElementById("companions").value,
       interests: [],
-      notes: userNotes + promptInjection
+      notes: userNotes + hackPrompt // Подмешиваем нашу инструкцию
     };
     
     const res = await fetch(`${API_BASE}/route/generate`, {
@@ -99,9 +97,8 @@ async function generate() {
     if (!res.ok) throw new Error("API Error");
     const data = await res.json();
     
-    // Заполняем интерфейс
     document.getElementById("articleTitle").textContent = `Маршрут: ${dest} на ${days} дн.`;
-    document.getElementById("articleSummary").textContent = data.summary || "Я составил для вас насыщенный маршрут, который охватывает главные достопримечательности. Вы можете менять дни местами.";
+    document.getElementById("articleSummary").textContent = data.summary || "Подробный путеводитель с ценами, графиком работы и логистикой.";
     document.getElementById("guideContent").innerHTML = buildArticle(data);
     
     showScreen("screenResult");
