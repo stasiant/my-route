@@ -9,41 +9,64 @@
   </head>
   <body>
     <main class="container">
-      <header class="header">
-        <div class="brand">
-          <div class="logo">MR</div>
-          <div class="title">My Route</div>
+      
+      <!-- WELCOME -->
+      <section id="screenWelcome">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:bold;">My Route</div>
+            <button id="langToggle" class="ios-link">RU</button>
         </div>
-        <div class="lang">
-          <button class="chip active" id="btnRu">RU</button>
-          <button class="chip" id="btnEn">EN</button>
-        </div>
-      </header>
-
-      <section class="card" id="screenWelcome">
-        <h1>Трэвел-блогер</h1>
-        <p class="muted">Я напишу подробную историю вашего путешествия.</p>
-        <button class="primary" id="startBtn">Создать</button>
+        
+        <h1 class="large-title">Путешествия.<br>Переосмысление.</h1>
+        <p class="subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
+        
+        <button id="btnStart" class="ios-btn">Начать</button>
       </section>
 
-      <section class="card hidden" id="screenForm">
-        <div class="row"><h2>Параметры</h2><button class="link" id="backBtn">Назад</button></div>
-        <label class="field"><span class="label">Куда?</span><input id="destination" class="input" placeholder="Рим" /></label>
-        <div class="grid2">
-          <label class="field"><span class="label">Дней</span><input id="days" class="input" type="number" placeholder="3" /></label>
-          <label class="field"><span class="label">Бюджет</span><select id="budget" class="input"><option value="medium">Средний</option><option value="high">Высокий</option></select></label>
+      <!-- FORM -->
+      <section id="screenForm" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <button id="backBtn" class="ios-link">Отмена</button>
+            <div style="font-weight:600;">Параметры</div>
+            <div style="width:50px;"></div> <!-- Spacer -->
         </div>
-        <label class="field"><span class="label">Пожелания</span><textarea id="notes" class="input" rows="3"></textarea></label>
-        <button class="primary" id="generateBtn">Сгенерировать</button>
+
+        <div class="section-header">Маршрут</div>
+        <div class="ios-group">
+            <div class="ios-row">
+                <span class="ios-label">Куда</span>
+                <input id="destination" class="ios-input" placeholder="Париж" />
+            </div>
+            <div class="ios-row">
+                <span class="ios-label">Дней</span>
+                <input id="days" type="number" class="ios-input" placeholder="3" />
+            </div>
+        </div>
+
+        <div class="section-header">Детали</div>
+        <div class="ios-group">
+            <div class="ios-row">
+                <textarea id="notes" class="ios-input" style="text-align:left;" placeholder="Ваши пожелания (музеи, еда, темп)..."></textarea>
+            </div>
+        </div>
+
+        <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
-      <section class="card hidden" id="screenResult">
-        <div class="row"><h2 id="resultTitle">История</h2><button class="link" id="newBtn">Новый</button></div>
-        <div class="resultBlock"><div class="muted" id="resultSummary"></div></div>
-        <div class="resultBlock"><div id="guide"></div></div>
+      <!-- RESULT (BOOK VIEW) -->
+      <section id="screenResult" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
+            <button id="newBtn" class="ios-link">Готово</button>
+        </div>
+
+        <div class="book-view">
+            <div id="summary" class="book-intro"></div>
+            <div id="bookBody" class="article-content"></div>
+        </div>
       </section>
+
     </main>
-    <!-- ДОБАВИЛ ВЕРСИЮ v=3 ЧТОБЫ СБРОСИТЬ КЭШ -->
-    <script src="./app.js?v=3"></script>
+    <script src="./app.js"></script>
   </body>
 </html>

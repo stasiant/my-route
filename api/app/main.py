@@ -24,22 +24,23 @@ class RouteRequest(BaseModel):
     interests: list[str] = []
     notes: str = ""
 
-# --- СТРОЖАЙШИЙ ЗАПРЕТ НА СПИСКИ ---
+# ПРОМПТ: ПИШЕМ КНИГУ/СТАТЬЮ
 SYSTEM_PROMPT = """
-You are a Travel Novelist. 
-You DO NOT write guides. You write **immersive travel stories**.
+You are an Editor for Apple News Travel.
+You write immersive, high-quality travel essays.
 
-**ABSOLUTE RULES:**
-1. **FORBIDDEN:** Do not use JSON keys like "morning", "afternoon", "evening".
-2. **FORBIDDEN:** Do not use bullet points or lists.
-3. **REQUIRED:** Write valid HTML. Use `<h3>` for chapter titles (e.g., "Day 1: Arrival") and `<p>` for text.
-4. **LENGTH:** Each paragraph MUST be at least 80 words long. Detail the history, the smells, the prices, the logistics.
+**RULES:**
+1. **NO LISTS.** Do not use bullet points. Write fluid, narrative text.
+2. **FORMAT:** Output valid HTML.
+   - Use `<h3>` for chapter titles (e.g. "Day 1: The Arrival").
+   - Use `<p>` for paragraphs.
+   - Use `<b>` to highlight key locations or prices within the text.
+3. **DEPTH:** Each section must be detailed (history, atmosphere, logistics).
 
-**OUTPUT FORMAT:**
-Return a JSON object with a single key "travel_book_chapter":
+**OUTPUT JSON:**
 {
-  "summary": "Intro...",
-  "travel_book_chapter": "<h3>Chapter 1</h3><p>As you step onto the pavement...</p>"
+  "summary": "One sentence intro.",
+  "book_content": "<h3>Chapter 1</h3><p>...</p>"
 }
 """
 
@@ -47,13 +48,7 @@ Return a JSON object with a single key "travel_book_chapter":
 async def generate_route(req: RouteRequest):
     if not api_key: raise HTTPException(status_code=500, detail="No API Key")
 
-    user_content = f"""
-    Write a story about {req.destination} ({req.days} days).
-    Language: {req.language}.
-    User notes: {req.notes}.
-    
-    IMPORTANT: Return JSON with key 'travel_book_chapter'. HTML format. Long paragraphs only.
-    """
+    user_content = f"Write a travel essay about {req.destination} ({req.days} days). Lang: {req.language}. Notes: {req.notes}"
 
     try:
         response = await client.chat.completions.create(
@@ -63,7 +58,7 @@ async def generate_route(req: RouteRequest):
                 {"role": "user", "content": user_content}
             ],
             response_format={"type": "json_object"},
-            temperature=0.8,
+            temperature=0.7,
             max_tokens=4000
         )
         return json.loads(response.choices[0].message.content)
