@@ -15,36 +15,47 @@ def generate_route_with_gpt(req: RouteRequest) -> RouteResponse:
     api_key = os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key, timeout=60.0)
 
-    # Структура ответа
     schema_hint = {
         "summary": "Short intro string",
-        "html_content": "<h3>Day 1...</h3><p>...</p>",
+        "html_content": "Full HTML formatted article",
         "map_points": [] 
     }
 
-    # Логика формирования контекста
     budget_desc = {
-        "economy": "Strict Economy (Free spots, street food, walking)",
-        "medium": "Balanced (Good value restaurants, standard tickets)",
-        "high": "Comfort (Taxi, nice restaurants, guided tours)",
-        "premium": "Luxury (Best hotels, fine dining, private drivers, exclusive access)"
-    }.get(req.budget, "Medium")
+        "economy": "Эконом (бесплатные места, недорогие кафе, пешком)",
+        "medium": "Средний (кафе, платные музеи, такси)",
+        "high": "Комфорт (хорошие рестораны, экскурсии)",
+        "premium": "Премиум (лучшие рестораны, индивидуальные туры)"
+    }.get(req.budget, "Средний")
 
     companion_desc = {
-        "solo": "Solo Traveler (Focus on safety, social spots, or solitude)",
-        "couple": "Romantic Couple (Atmospheric spots, nice dinners)",
-        "family": "Family with Kids (Playgrounds, kid-friendly food, not too much walking)",
-        "group": "Group of Friends (Bars, fun activities, active pace)"
-    }.get(req.companions, "Couple")
+        "solo": "Один",
+        "couple": "Пара",
+        "family": "Семья с детьми",
+        "group": "Компания друзей"
+    }.get(req.companions, "Пара")
 
+    # --- ЖЕСТКИЙ ШАБЛОН ДЛЯ ИИ ---
     system = (
-        "You are a Premium Travel Editor.\n"
-        "Write a detailed HTML travel essay.\n"
-        f"CONTEXT: Budget: {budget_desc}. Group: {companion_desc}.\n"
-        "RULES:\n"
-        "1. html_content: Use <h3> and <p>. NO LISTS.\n"
-        "2. Tailor recommendations to the Budget and Group type.\n"
-        f"JSON Format: {json.dumps(schema_hint)}\n"
+        "Ты профессиональный трэвел-журналист и гид.\n"
+        "Твоя задача — составить маршрут СТРОГО по указанному HTML-шаблону.\n"
+        f"УЧИТЫВАЙ: Бюджет - {budget_desc}, Компания - {companion_desc}.\n\n"
+        "ОБЯЗАТЕЛЬНЫЙ ШАБЛОН ОТВЕТА (используй ровно эти теги):\n"
+        "<p>[Вступительный абзац о городе и поездке]</p>\n\n"
+        "<h2>Маршрут по [Город] на [Кол-во] дней</h2>\n\n"
+        "<h3>День 1: [Название дня, например: Сердце столицы]</h3>\n"
+        "<p>[Короткое описание логики первого дня]</p>\n"
+        "<p><b>[Название локации 1]</b>. [Подробное описание, что посмотреть, сколько заложить времени, цены]</p>\n"
+        "<p><b>[Название локации 2]</b>. [Подробное описание...]</p>\n"
+        "<p><b>[Обед/Ужин]</b>. [Рекомендация заведения]</p>\n\n"
+        "...(Повторить для каждого дня)...\n\n"
+        "<h2>Полезные советы для поездки</h2>\n"
+        "<p><b>Транспорт:</b> [Как перемещаться, какие карты купить]</p>\n"
+        "<p><b>Проживание:</b> [В каком районе лучше жить]</p>\n"
+        "<p><b>Бюджет:</b> [Примерные цены на еду и билеты]</p>\n"
+        "<p><b>Совет:</b> [Лайфхак или важная особенность]</p>\n\n"
+        "Верни ответ в формате JSON:\n"
+        f"{json.dumps(schema_hint)}"
     )
 
     user_payload = {
@@ -65,7 +76,6 @@ def generate_route_with_gpt(req: RouteRequest) -> RouteResponse:
     )
 
     data = json.loads(_extract_json(resp.choices[0].message.content))
-    # Для упрощения пока возвращаем пустые точки карты, фокус на тексте
     return RouteResponse(
         summary=data.get("summary", ""),
         html_content=data.get("html_content"),

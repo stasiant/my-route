@@ -168,3 +168,34 @@ textarea.ios-input {
 .ios-select:focus {
   outline: none;
 }
+
+/* Стили для структурированного текста от ИИ */
+.article-content h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 45px;
+  margin-bottom: 20px;
+  color: #000;
+  border-bottom: 2px solid #007AFF; /* Красивая синяя линия под главным заголовком */
+  padding-bottom: 8px;
+  display: inline-block;
+}
+
+.article-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 35px;
+  margin-bottom: 12px;
+  color: #007AFF; /* Заголовки дней синим цветом (Apple Style) */
+}
+
+.article-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.article-content b {
+  color: #000;
+  font-weight: 600;
+}
