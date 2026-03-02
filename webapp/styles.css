@@ -32,23 +32,17 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 #resultSummary { font-style: italic; font-size: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-top: 15px; }
 
-/* === СТИЛИ ИСТОРИИ (БЕЗ СПИСКОВ И ДНЕЙ) === */
-
+/* === НОВЫЕ СТИЛИ ДЛЯ ИСТОРИИ === */
 .story-content {
-  margin-top: 20px;
+  margin-top: 25px;
 }
-
-/* Заголовки, которые придумал ИИ */
 .story-content h3 {
   font-size: 20px;
   font-weight: 800;
   color: #fff;
-  margin-top: 35px;
+  margin-top: 40px;
   margin-bottom: 15px;
-  /* Никаких рамок и подчеркиваний */
 }
-
-/* Абзацы текста */
 .story-content p {
   font-size: 16px;
   line-height: 1.7;
@@ -56,15 +50,6 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple
   margin-bottom: 20px;
   text-align: left;
 }
-
-/* Выделения в тексте */
-.story-content b, .story-content strong {
+.story-content b {
   color: #fff;
-  font-weight: 700;
-}
-
-/* Убираем любые точки, если ИИ вдруг решит сделать список */
-.story-content ul {
-  list-style: none;
-  padding: 0;
 }

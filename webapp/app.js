@@ -1,9 +1,10 @@
 const tg = window.Telegram?.WebApp;
+// Указываем адрес API. Если ты запускаешь локально, поменяй на http://localhost:8000
 const API_BASE = "https://my-route-api.onrender.com";
 
 const i18n = {
   ru: {
-    subtitle: "Трэвел-блог", welcomeTitle: "Привет! Я My Route", welcomeText: "Я напишу для вас уникальную историю путешествия.", startBtn: "Начать",
+    subtitle: "Трэвел-блог", welcomeTitle: "Привет! Я My Route", welcomeText: "Я напишу для вас увлекательную историю путешествия.", startBtn: "Начать",
     formTitle: "Детали", backBtn: "← Назад", lblDestination: "Куда?", lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
     optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", lblNotes: "Пожелания",
     generateBtn: "Написать историю", resultTitle: "Ваша история", newBtn: "Новый", loading: "Пишу книгу (30 сек)...", errFill: "Заполните поля."
@@ -42,7 +43,7 @@ async function generate() {
   
   try {
     const notes = document.getElementById("notes").value;
-    const hackPrompt = " (КРИТИЧЕСКИ ВАЖНО: ПИШИ СПЛОШНЫМ ТЕКСТОМ! Никаких списков, никаких коротких предложений! Пиши как писатель. Абзацы должны быть ОГРОМНЫМИ. В каждом абзаце пиши цены и историю. Используй теги <h3> для заголовков и <p> для длинного текста.)";
+    const hackPrompt = " (IMPORTANT: Write output as HTML. No lists. Use <h3> for titles and <p> for long text.)";
 
     const payload = {
       language: currentLang, destination: dest, days: days,
@@ -55,22 +56,22 @@ async function generate() {
     
     document.getElementById("resultSummary").textContent = data.summary || "";
     
-    let finalHtml = "";
-    if (data.full_article_html) {
-        finalHtml = data.full_article_html;
+    // Вставляем HTML
+    let content = "";
+    if (data.html_content) {
+        content = data.html_content;
     } else if (data.daily_plan) {
-        // Если сервер еще не обновился, заставляем старый формат выглядеть как абзацы
+        // Fallback для старого формата
         data.daily_plan.forEach(d => {
-            const arr = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-            if(arr.length) {
-                arr.forEach(txt => finalHtml += `<p style="margin-bottom: 25px; line-height: 1.6;"><b>${txt}</b></p>`);
-            }
+             const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
+             items.forEach(it => content += `<p><b>${it}</b></p>`);
         });
     }
-
-    document.getElementById("guide").innerHTML = `<div class="story-content">${finalHtml}</div>`;
+    
+    document.getElementById("guide").innerHTML = `<div class="story-content">${content}</div>`;
     showScreen("screenResult");
   } catch (e) {
+    console.error(e);
     alert("Ошибка. Попробуйте еще раз.");
   } finally {
     btn.disabled = false; btn.textContent = i18n[currentLang].generateBtn;
