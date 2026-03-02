@@ -424,3 +424,71 @@ select.input option {
 #guideTitle {
   display: none; /* Скрываем лишний заголовок "Ваш маршрут" */
 }
+
+/* --- СТИЛЬ ПУТЕВОДИТЕЛЯ --- */
+
+/* Контейнер текста */
+.blog-article {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #fff;
+}
+
+/* Заголовок "День X" */
+.blog-day-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 32px 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Список */
+.blog-list {
+  margin: 0;
+  padding-left: 20px; /* Отступ для стандартных точек */
+  list-style-type: disc; /* Обычные круглые точки */
+}
+
+.blog-list li {
+  margin-bottom: 20px; /* Расстояние между местами */
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9); /* Чуть приглушенный текст описания */
+}
+
+/* Название места (жирное) */
+.blog-list li b, 
+.blog-list li strong {
+  color: #ffffff; /* Ярко-белый */
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Очистка стилей результата */
+#screenResult .resultBlock {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+/* Скрываем ненужные заголовки */
+#guideTitle, #pointsTitle {
+  margin-top: 30px;
+  font-size: 18px;
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* Вводный текст (summary) */
+#resultSummary {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 12px;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #fff !important;
+  margin-bottom: 20px;
+  border-left: 4px solid #4ca5ff;
+}

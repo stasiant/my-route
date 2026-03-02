@@ -5,56 +5,58 @@ const i18n = {
   ru: {
     subtitle: "Планировщик путешествий",
     welcomeTitle: "Привет! Я My Route",
-    welcomeText: "Заполни форму — я создам подробный гид сплошным текстом.",
-    features: ["Гид в стиле статьи", "История и цены", "Чек‑лист перед поездкой", "Список точек (в конце)"],
-    startBtn: "Создать маршрут",
-    priceNote: "1 маршрут = 50⭐ (бесплатно в бете).",
+    welcomeText: "Я составлю насыщенный маршрут с подробным описанием мест.",
+    features: ["Формат путеводителя", "Исторические справки", "Подробные описания", "Точки на карте"],
+    startBtn: "Поехали",
+    priceNote: "Бесплатно в бета-версии.",
     
-    formTitle: "Параметры поездки", backBtn: "← Назад", 
-    lblDestination: "Куда едем?",
+    formTitle: "Куда отправимся?", backBtn: "← Назад", 
+    lblDestination: "Город / Страна",
     lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
     optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", optBudgetPremium: "Премиум",
-    lblInterests: "Интересы", lblPace: "Темп",
-    optPaceSlow: "Спокойно", optPaceNormal: "Нормально", optPaceFast: "Активно",
-    lblCompanions: "Кто едет",
-    optCompSolo: "Я один", optCompCouple: "Пара", optCompFamily: "Семья", optCompGroup: "Компания",
-    lblNotes: "Пожелания", notesPh: "Например: люблю историю, вкусно поесть...", notesHelper: "Чем больше деталей, тем лучше результат.",
-    generateBtn: "Сгенерировать гид", formHint: "Это займет 10–20 секунд.",
+    lblInterests: "Что интересно?", lblPace: "Темп",
+    optPaceSlow: "Расслабленный", optPaceNormal: "Обычный", optPaceFast: "Насыщенный",
+    lblCompanions: "Компания",
+    optCompSolo: "Я один", optCompCouple: "Пара", optCompFamily: "Семья", optCompGroup: "Группа",
+    lblNotes: "Пожелания", notesPh: "Например: хочу увидеть нетуристические места, люблю азиатскую кухню...", 
+    notesHelper: "Чем подробнее запрос, тем лучше результат.",
+    generateBtn: "Составить маршрут", formHint: "Генерация занимает около 15 секунд.",
     
-    resultTitle: "Ваш маршрут", newBtn: "Новый",
-    guideTitle: "Программа путешествия", pointsTitle: "Карта локаций",
-    loading: "Пишу статью...", errFill: "Напишите, куда едете и на сколько дней.", errApi: "Ошибка генерации. Попробуйте снова."
+    resultTitle: "Ваш путеводитель", newBtn: "Новый",
+    guideTitle: "Маршрут", pointsTitle: "Карта",
+    loading: "Пишу подробный гид...", errFill: "Укажите куда и на сколько дней.", errApi: "Ошибка. Попробуйте снова."
   },
   en: {
     subtitle: "Travel Planner",
     welcomeTitle: "Hi! I'm My Route",
-    welcomeText: "I'll generate a detailed continuous guide.",
-    features: ["Article style itinerary", "History & Prices", "Checklist", "Map points"],
-    startBtn: "Start",
-    priceNote: "1 itinerary = 50⭐ (free in beta).",
+    welcomeText: "I will create a rich itinerary with detailed descriptions.",
+    features: ["Guidebook style", "Historical facts", "Detailed descriptions", "Map points"],
+    startBtn: "Let's go",
+    priceNote: "Free in beta.",
     
-    formTitle: "Trip Details", backBtn: "← Back", 
-    lblDestination: "Destination",
+    formTitle: "Where to?", backBtn: "← Back", 
+    lblDestination: "City / Country",
     lblDays: "Days", lblNights: "Nights", lblBudget: "Budget",
     optBudgetLow: "Low", optBudgetMed: "Medium", optBudgetHigh: "High", optBudgetPremium: "Premium",
     lblInterests: "Interests", lblPace: "Pace",
-    optPaceSlow: "Slow", optPaceNormal: "Normal", optPaceFast: "Fast",
+    optPaceSlow: "Relaxed", optPaceNormal: "Normal", optPaceFast: "Intense",
     lblCompanions: "Companions",
     optCompSolo: "Solo", optCompCouple: "Couple", optCompFamily: "Family", optCompGroup: "Group",
-    lblNotes: "Wishes", notesPh: "Love history, food...", notesHelper: "More details = better guide.",
-    generateBtn: "Generate Guide", formHint: "Takes 10-20 seconds.",
+    lblNotes: "Wishes", notesPh: "E.g., hidden gems, asian food...", notesHelper: "More details = better result.",
+    generateBtn: "Create Route", formHint: "Takes about 15 seconds.",
     
-    resultTitle: "Your Route", newBtn: "New",
-    guideTitle: "Itinerary", pointsTitle: "Map Locations",
-    loading: "Writing article...", errFill: "Fill destination & days.", errApi: "Error generating."
+    resultTitle: "Your Guide", newBtn: "New",
+    guideTitle: "Itinerary", pointsTitle: "Map",
+    loading: "Writing guide...", errFill: "Fill destination & days.", errApi: "Error."
   }
 };
 
 const INTERESTS = [
-  { key: "food", ru: "еда", en: "food" }, 
-  { key: "history", ru: "история", en: "history" },
-  { key: "nature", ru: "природа", en: "nature" }, 
-  { key: "shopping", ru: "шопинг", en: "shopping" }
+  { key: "food", ru: "Гастрономия", en: "Gastronomy" }, 
+  { key: "history", ru: "История", en: "History" },
+  { key: "art", ru: "Искусство", en: "Art" },
+  { key: "nature", ru: "Природа", en: "Nature" }, 
+  { key: "shopping", ru: "Шопинг", en: "Shopping" }
 ];
 
 function getLang() { return localStorage.getItem("lang") || "ru"; }
@@ -131,14 +133,24 @@ function render() {
   }
 }
 
-// Форматируем текст от ИИ: выделяем жирным то, что в звездочках **, и убираем "Утро:" если ИИ тупит
+// Форматирование текста: жирный шрифт и очистка
 function formatAIText(text) {
+  // Убираем маркеры времени, если они есть
   let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
+  // Превращаем **Текст** в <b>Текст</b>
   clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  // Превращаем "Название места." в "<b>Название места.</b>" (если ИИ забыл звездочки, но поставил точку в начале)
+  // Это эвристика, работает для простых случаев
+  if (!clean.includes('<b>')) {
+     const parts = clean.split('. ');
+     if (parts.length > 1 && parts[0].length < 50) {
+        clean = `<b>${parts[0]}.</b> ${parts.slice(1).join('. ')}`;
+     }
+  }
   return clean;
 }
 
-// === ФОРМАТ СПЛОШНОЙ СТАТЬИ ===
+// === ПОСТРОЕНИЕ ГИДА (ТОЛЬКО ДНИ) ===
 function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
   let html = `<div class="blog-article">`;
@@ -148,13 +160,13 @@ function buildGuideHTML(data, lang) {
       // Заголовок дня
       html += `<h3 class="blog-day-title">${t("День", "Day")} ${d.day}</h3>`;
       
-      // Собираем всё в один массив
+      // Объединяем все активности в один массив
       const allActivities = [];
       if (d.morning) allActivities.push(...d.morning);
       if (d.afternoon) allActivities.push(...d.afternoon);
       if (d.evening) allActivities.push(...d.evening);
 
-      // Сплошной список с точками
+      // Выводим список
       if (allActivities.length > 0) {
         html += `<ul class="blog-list">`;
         allActivities.forEach(item => {
@@ -164,23 +176,9 @@ function buildGuideHTML(data, lang) {
       }
     });
   }
-
-  // Советы
-  if (Array.isArray(data.tips) && data.tips.length > 0) {
-    html += `<h3 class="blog-day-title">💡 ${t("Советы", "Tips")}</h3>`;
-    html += `<ul class="blog-list">`;
-    data.tips.forEach(x => html += `<li>${formatAIText(x)}</li>`);
-    html += `</ul>`;
-  }
-
-  // Чек-лист
-  if (Array.isArray(data.checklist) && data.checklist.length > 0) {
-    html += `<h3 class="blog-day-title">✅ ${t("Чек-лист", "Checklist")}</h3>`;
-    html += `<ul class="blog-list">`;
-    data.checklist.forEach(x => html += `<li>${formatAIText(x)}</li>`);
-    html += `</ul>`;
-  }
-
+  
+  // Чек-лист и советы МЫ НЕ ВЫВОДИМ, как ты и просил.
+  
   html += `</div>`;
   return html;
 }
@@ -200,10 +198,11 @@ async function generate() {
   try {
     const userNotes = document.getElementById("notes").value;
     
-    // === ЖЕСТКИЙ ПРИКАЗ ДЛЯ ИИ ===
+    // === ВАЖНО: ИНСТРУКЦИЯ ДЛЯ ИИ ===
+    // Мы просим его писать подробно и ставить звездочки вокруг названий мест.
     const systemInstruction = lang === 'ru' 
-      ? " (ИНСТРУКЦИЯ: Составь гид в стиле статьи! НЕ ИСПОЛЬЗУЙ слова Утро/День/Вечер. Каждый пункт начинай с названия места в двойных звездочках, например **Красная площадь**. После названия ставь точку и пиши 3-4 предложения с подробным описанием, интересными фактами и ценами. Текст должен быть связным и объемным.)"
-      : " (INSTRUCTION: Write an article-style guide! DO NOT use Morning/Afternoon/Evening labels. Start each item with the location name in double asterisks, like **Eiffel Tower**. Then write 3-4 detailed sentences with history and prices.)";
+      ? " (ВАЖНО: Игнорируй структуру утро/день. Напиши связный рассказ для каждого пункта. Каждый пункт начинай с **Названия места** (в звездочках), затем точка, затем подробное описание на 3-4 предложения с историей, атмосферой и ценами. Не делай чек-листы.)"
+      : " (IMPORTANT: Ignore morning/evening structure. Start each item with **Location Name** (in stars), then a period, then a detailed 3-4 sentence description with history and prices. No checklists.)";
 
     const payload = {
       language: lang, destination: dest, days: days,
@@ -221,12 +220,15 @@ async function generate() {
     if (!res.ok) throw new Error("API Error");
     const data = await res.json();
     
+    // Введение (Summary)
     const summaryEl = document.getElementById("resultSummary");
     if(summaryEl) summaryEl.textContent = data.summary || "";
 
+    // Основной контент
     const guideEl = document.getElementById("guide");
     if(guideEl) guideEl.innerHTML = buildGuideHTML(data, lang);
     
+    // Точки на карте
     const pl = document.getElementById("pointsList");
     if (pl) {
       pl.innerHTML = "";
