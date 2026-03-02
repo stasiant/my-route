@@ -23,15 +23,17 @@ def _bot_api(method: str, data: Dict[str, Any]) -> Any:
     return payload["result"]
 
 
+import uuid
+
 def create_stars_invoice_link(
     *,
     title: str,
     description: str,
     stars_amount: int,
-    payload: Any,  # может быть dict или str
+    payload: Any,
 ) -> str:
-    # Telegram требует payload строкой
-    payload_str = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False)
+    # Telegram payload: короткая строка (лучше ASCII), не JSON всего объекта
+    payload_str = f"order:{uuid.uuid4().hex}"
 
     result = _bot_api(
         "createInvoiceLink",
