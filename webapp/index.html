@@ -3,130 +3,84 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>My Route</title>
+    <title>My Route - Путеводитель</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="container">
-      <!-- HEADER -->
-      <header class="header">
-        <div class="brand">
+      
+      <!-- Экран формы -->
+      <section id="screenForm" class="screen">
+        <header class="header">
           <div class="logo">MR</div>
-          <div>
-            <div class="title">My Route</div>
-            <div class="subtitle" id="subtitle">Трэвел-блогер</div>
+          <h1 class="app-title">Создать маршрут</h1>
+        </header>
+
+        <div class="form-group">
+          <label>Куда едем?</label>
+          <input id="destination" type="text" placeholder="Например: Москва, Россия" />
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>Дней</label>
+            <input id="days" type="number" min="1" placeholder="3" />
+          </div>
+          <div class="form-group">
+            <label>Ночей</label>
+            <input id="nights" type="number" min="0" placeholder="2" />
           </div>
         </div>
-        <div class="lang">
-          <button class="chip active" id="btnRu" type="button">RU</button>
-          <button class="chip" id="btnEn" type="button">EN</button>
-        </div>
-      </header>
 
-      <!-- WELCOME -->
-      <section class="card" id="screenWelcome">
-        <h1 id="welcomeTitle">Привет! Я My Route</h1>
-        <p id="welcomeText" class="muted">Я напишу подробный путеводитель в стиле трэвел-блога: с историей, ценами и советами.</p>
+        <div class="form-group">
+          <label>Бюджет</label>
+          <select id="budget">
+            <option value="low">Эконом</option>
+            <option value="medium" selected>Средний</option>
+            <option value="high">Комфорт</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Темп</label>
+          <select id="pace">
+            <option value="slow">Расслабленный</option>
+            <option value="normal" selected>Обычный</option>
+            <option value="fast">Насыщенный</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Компания</label>
+          <select id="companions">
+            <option value="solo">Я один</option>
+            <option value="couple" selected>Пара</option>
+            <option value="family">Семья</option>
+            <option value="group">Друзья</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Особые пожелания</label>
+          <textarea id="notes" rows="3" placeholder="Что вы любите? (архитектура, природа, еда...)"></textarea>
+        </div>
+
+        <button id="generateBtn" class="btn-primary">Сгенерировать путеводитель</button>
+      </section>
+
+      <!-- Экран результата (Статья) -->
+      <section id="screenResult" class="screen hidden">
+        <button id="backBtn" class="btn-secondary">← Новый маршрут</button>
         
-        <ul class="list" id="featureList">
-          <li>Подробные описания мест</li>
-          <li>История и лайфхаки</li>
-          <li>Маршрут по дням</li>
-          <li>Точки на карте</li>
-        </ul>
-
-        <button class="primary" id="startBtn" type="button">Начать</button>
-        <p class="fineprint" id="priceNote">Бесплатно в бета-версии.</p>
-      </section>
-
-      <!-- FORM -->
-      <section class="card hidden" id="screenForm">
-        <div class="row">
-          <h2 id="formTitle" class="h2">Детали поездки</h2>
-          <button class="link" id="backBtn" type="button">← Назад</button>
-        </div>
-
-        <label class="field">
-          <span class="label" id="lblDestination">Город или страна</span>
-          <input id="destination" class="input" placeholder="Например: Рим, Италия" />
-        </label>
-
-        <div class="grid2">
-          <label class="field">
-            <span class="label" id="lblDays">Дней</span>
-            <input id="days" class="input" type="number" min="1" step="1" placeholder="3" />
-          </label>
-          <label class="field">
-            <span class="label" id="lblNights">Ночей</span>
-            <input id="nights" class="input" type="number" min="0" step="1" placeholder="2" />
-          </label>
-        </div>
-
-        <label class="field">
-          <span class="label" id="lblBudget">Бюджет</span>
-          <select id="budget" class="input">
-            <option value="low" id="optBudgetLow">Эконом</option>
-            <option value="medium" id="optBudgetMed" selected>Средний</option>
-            <option value="high" id="optBudgetHigh">Высокий</option>
-            <option value="premium" id="optBudgetPremium">Премиум</option>
-          </select>
-        </label>
-
-        <div class="field">
-          <span class="label" id="lblInterests">Интересы</span>
-          <div class="chips" id="interests"></div>
-        </div>
-
-        <label class="field">
-          <span class="label" id="lblPace">Темп</span>
-          <select id="pace" class="input">
-            <option value="slow" id="optPaceSlow">Расслабленный</option>
-            <option value="normal" id="optPaceNormal" selected>Обычный</option>
-            <option value="fast" id="optPaceFast">Насыщенный</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="label" id="lblCompanions">Кто едет</span>
-          <select id="companions" class="input">
-            <option value="solo" id="optCompSolo">Я один</option>
-            <option value="couple" id="optCompCouple" selected>Пара</option>
-            <option value="family" id="optCompFamily">Семья</option>
-            <option value="group" id="optCompGroup">Компания</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="label" id="lblNotes">Пожелания (важно!)</span>
-          <textarea id="notes" class="input textarea" rows="4"></textarea>
-          <div class="helper" id="notesHelper">Напишите, что любите, чтобы гид был точнее.</div>
-        </label>
-
-        <button class="primary" id="generateBtn" type="button">Написать гид</button>
-        <p class="fineprint" id="formHint">Это займет 15–20 секунд.</p>
-      </section>
-
-      <!-- RESULT -->
-      <section class="card hidden" id="screenResult">
-        <div class="row">
-          <h2 class="h2" id="resultTitle">Ваш путеводитель</h2>
-          <button class="link" id="newBtn" type="button">Новый</button>
-        </div>
-
-        <div class="resultBlock">
-          <div class="muted" id="resultSummary"></div>
-        </div>
-
-        <div class="resultBlock">
-          <div id="guide" class="guideText"></div>
-        </div>
-
-        <div class="resultBlock">
-          <h3 class="h3" id="pointsTitle" style="margin-top: 30px; border-top: 1px solid #ffffff20; padding-top: 20px;">Карта мест</h3>
-          <ol class="list" id="pointsList"></ol>
+        <div class="article-content">
+          <h1 id="articleTitle" class="article-main-title">Ваш маршрут</h1>
+          <p id="articleSummary" class="article-summary"></p>
+          
+          <div id="guideContent"></div>
         </div>
       </section>
+
     </main>
     <script src="./app.js"></script>
   </body>
