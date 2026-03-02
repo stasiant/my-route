@@ -7,15 +7,15 @@
   --accent: #3b82f6;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; line-height: 1.5; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; line-height: 1.6; }
 .container { padding: 16px; max-width: 600px; margin: 0 auto; }
 .hidden { display: none !important; }
 
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.brand { display: flex; align-items: center; gap: 10px; }
 .logo { background: var(--accent); color: #fff; padding: 6px 10px; border-radius: 8px; font-weight: bold; }
-.title { font-weight: bold; font-size: 16px; }
-.subtitle { font-size: 12px; color: var(--muted); }
+.title { font-weight: bold; font-size: 16px; margin-left: 10px; }
+.subtitle { font-size: 12px; color: var(--muted); margin-left: 10px; }
+.brand { display: flex; align-items: center; }
 
 .lang .chip { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 20px; cursor: pointer; }
 .lang .chip.active { background: var(--accent); border-color: var(--accent); }
@@ -30,34 +30,41 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple
 .label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
 .input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#resultSummary { font-style: italic; font-size: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-top: 15px; }
 
-/* === СТИЛИ ЛОНГРИДА (СТАТЬИ) === */
-.resultBlock { margin-top: 20px; }
-#resultSummary { font-style: italic; font-size: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+/* === СТИЛИ ИСТОРИИ (БЕЗ СПИСКОВ И ДНЕЙ) === */
 
-.blog-day-title {
-  font-size: 22px;
+.story-content {
+  margin-top: 20px;
+}
+
+/* Заголовки, которые придумал ИИ */
+.story-content h3 {
+  font-size: 20px;
   font-weight: 800;
-  margin: 40px 0 15px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 8px;
-}
-
-.blog-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px; /* Отступы между абзацами */
-}
-
-.blog-paragraph {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.blog-paragraph b {
-  font-size: 16px;
   color: #fff;
-  font-weight: bold;
+  margin-top: 35px;
+  margin-bottom: 15px;
+  /* Никаких рамок и подчеркиваний */
+}
+
+/* Абзацы текста */
+.story-content p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+/* Выделения в тексте */
+.story-content b, .story-content strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Убираем любые точки, если ИИ вдруг решит сделать список */
+.story-content ul {
+  list-style: none;
+  padding: 0;
 }

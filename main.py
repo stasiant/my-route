@@ -25,55 +25,39 @@ class RouteRequest(BaseModel):
     interests: list[str] = []
     notes: str = ""
 
-# --- НОВАЯ ЛОГИКА: МЫ ПРОСИМ HTML, А НЕ СПИСКИ ---
+# --- НОВАЯ ИНСТРУКЦИЯ: ИИ САМ СТРУКТУРИРУЕТ ТЕКСТ ---
 SYSTEM_PROMPT = """
-You are an expert Travel Writer and Historian.
-Your goal is to write a Deep, Immersive, and Highly Practical Travel Guide.
+You are a Travel Book Author. 
+Your task is to write a **continuous, engaging travel story** (longread).
 
-**CRITICAL INSTRUCTION:**
-Do NOT output lists or bullet points. You must write **Long, Rich Paragraphs** formatted in HTML.
-
-For EACH location in the itinerary, you MUST cover:
-1.  **Atmosphere & History:** 3-4 sentences description.
-2.  **Practical Info:** Opening hours and Ticket prices (approximate).
-3.  **Logistics:** How to get there from the previous point.
+**RULES:**
+1.  **NO "Day 1" HEADERS:** Do not strictly separate days unless it fits the story flow.
+2.  **NO LISTS:** Do not use bullet points. Write full paragraphs.
+3.  **USE HTML:** You control the formatting.
+    - Use `<h3>` for your own creative titles (e.g., "<h3>Arrival and the Red Square</h3>").
+    - Use `<p>` for text.
+    - Use `<b>` for highlighting places/prices.
+4.  **CONTENT:** Include history, prices, and logistics naturally in the text.
 
 **JSON STRUCTURE:**
-You must return a valid JSON object with this exact structure:
+Return a JSON with a single "content" field containing the entire HTML article.
 {
-  "summary": "Short intro string...",
-  "daily_plan": [
-    {
-      "day": 1,
-      "content": "HTML STRING HERE" 
-    }
-  ],
-  "map_points": [{"name": "Location 1"}, {"name": "Location 2"}]
+  "summary": "Short intro...",
+  "full_article_html": "<h3>Chapter 1: The Heart of the City</h3><p>Start your journey at...</p><h3>Next Morning</h3><p>..."
 }
-
-**HTML FORMATTING RULES for 'content':**
-- Use `<h3>` for Location Names.
-- Use `<p>` for the text description.
-- Use `<b>` for key details like **Price:** or **Hours:**.
-- Combine multiple locations into one fluid narrative for the day.
-
-Example of 'content':
-"<h3>The Red Square</h3><p>The heart of Moscow... History... <b>Price:</b> Free entry. <b>Open:</b> 24/7.</p><h3>The Kremlin</h3><p>Next, walk 5 minutes to... Description... <b>Price:</b> 1000 RUB.</p>"
 """
 
 @app.post("/route/generate")
 async def generate_route(req: RouteRequest):
-    if not api_key:
-        raise HTTPException(status_code=500, detail="No API Key")
+    if not api_key: raise HTTPException(status_code=500, detail="No API Key")
 
     user_content = f"""
-    Destination: {req.destination}
-    Duration: {req.days} days
-    Language: {req.language} (Output MUST be in {req.language})
-    Budget: {req.budget}
-    Wishes: {req.notes}
+    Write a travel story about {req.destination} for {req.days} days.
+    Travelers: {req.companions}. Budget: {req.budget}.
+    Language: {req.language}.
+    Wishes: {req.notes}.
     
-    WRITE A LONGREAD. NO SHORT LISTS. INCLUDE PRICES AND LOGISTICS FOR EVERY STOP.
+    IMPORTANT: Return valid JSON with 'full_article_html'. Do not use bullet points. Write a story.
     """
 
     try:
@@ -84,7 +68,7 @@ async def generate_route(req: RouteRequest):
                 {"role": "user", "content": user_content}
             ],
             response_format={"type": "json_object"},
-            temperature=0.7,
+            temperature=0.8, # Больше креатива
             max_tokens=4000
         )
         return json.loads(response.choices[0].message.content)

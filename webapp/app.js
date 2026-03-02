@@ -3,16 +3,16 @@ const API_BASE = "https://my-route-api.onrender.com";
 
 const i18n = {
   ru: {
-    subtitle: "Планировщик", welcomeTitle: "Привет! Я My Route", welcomeText: "Я составлю подробнейший лонгрид по дням (с ценами и логистикой).", startBtn: "Начать",
-    formTitle: "Детали поездки", backBtn: "← Назад", lblDestination: "Город/Страна", lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
+    subtitle: "Трэвел-блог", welcomeTitle: "Привет! Я My Route", welcomeText: "Я напишу для вас уникальную историю путешествия.", startBtn: "Начать",
+    formTitle: "Детали", backBtn: "← Назад", lblDestination: "Куда?", lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
     optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", lblNotes: "Пожелания",
-    generateBtn: "Написать лонгрид", resultTitle: "Ваш путеводитель", newBtn: "Новый", loading: "Пишу огромную статью...", errFill: "Заполните город и дни."
+    generateBtn: "Написать историю", resultTitle: "Ваша история", newBtn: "Новый", loading: "Сочиняю рассказ...", errFill: "Заполните поля."
   },
   en: {
-    subtitle: "Planner", welcomeTitle: "Hi! I'm My Route", welcomeText: "I'll create a detailed daily longread with prices.", startBtn: "Start",
-    formTitle: "Trip Details", backBtn: "← Back", lblDestination: "Destination", lblDays: "Days", lblNights: "Nights", lblBudget: "Budget",
+    subtitle: "Travel Blog", welcomeTitle: "Hi! I'm My Route", welcomeText: "I will write a unique travel story for you.", startBtn: "Start",
+    formTitle: "Details", backBtn: "← Back", lblDestination: "Where?", lblDays: "Days", lblNights: "Nights", lblBudget: "Budget",
     optBudgetLow: "Low", optBudgetMed: "Medium", optBudgetHigh: "Comfort", lblNotes: "Wishes",
-    generateBtn: "Write Longread", resultTitle: "Your Guide", newBtn: "New", loading: "Writing huge article...", errFill: "Fill destination & days."
+    generateBtn: "Write Story", resultTitle: "Your Story", newBtn: "New", loading: "Writing story...", errFill: "Fill fields."
   }
 };
 
@@ -33,41 +33,6 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
-// Умный парсер: выделяет жирным названия мест
-function formatText(text) {
-  let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
-  if (clean.includes('**')) {
-    clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  } else {
-    const parts = clean.split('. ');
-    if (parts.length > 1 && parts[0].length < 80) clean = `<b>${parts[0]}.</b> ` + parts.slice(1).join('. ');
-  }
-  return clean;
-}
-
-// Склеиваем массивы утра/дня/вечера в сплошной текст
-function buildArticle(data) {
-  let html = '';
-  if (data.daily_plan && Array.isArray(data.daily_plan)) {
-    data.daily_plan.forEach(d => {
-      html += `<h2 class="blog-day-title">День ${d.day}</h2>`;
-      const activities = [];
-      if (d.morning) activities.push(...d.morning);
-      if (d.afternoon) activities.push(...d.afternoon);
-      if (d.evening) activities.push(...d.evening);
-
-      if (activities.length > 0) {
-        html += `<div class="blog-list">`;
-        activities.forEach(act => {
-          html += `<p class="blog-paragraph">${formatText(act)}</p>`;
-        });
-        html += `</div>`;
-      }
-    });
-  }
-  return html;
-}
-
 async function generate() {
   const btn = document.getElementById("generateBtn");
   const dest = document.getElementById("destination").value.trim();
@@ -78,10 +43,11 @@ async function generate() {
   
   try {
     const notes = document.getElementById("notes").value;
-    // ЖЕСТКИЙ ПРИКАЗ: Писать длинно в стандартный JSON
+    
+    // Промпт: "Забудь про формат списка"
     const hackPrompt = currentLang === 'ru' 
-      ? " (ВНИМАНИЕ: Для каждой точки (morning/afternoon/evening) пиши ОГРОМНЫЙ текст сплошняком. Обязательно: История, Цены (в рублях/валюте), Часы работы, Логистика (как добраться). Формат: **Название**. Длинное описание на 5-6 предложений. Никаких коротких списков!)"
-      : " (ATTENTION: For every item write a HUGE paragraph. Must include: History, Prices, Hours, Logistics. Format: **Name**. Long 5-6 sentence description.)";
+      ? " (ВНИМАНИЕ: Не используй списки! Не пиши 'День 1'. Пиши сплошную красивую статью с заголовками <h3>, как в журнале.)"
+      : " (ATTENTION: No lists! No 'Day 1' headers. Write a beautiful article with <h3> headers like in a magazine.)";
 
     const payload = {
       language: currentLang, destination: dest, days: days,
@@ -93,10 +59,32 @@ async function generate() {
     const data = await res.json();
     
     document.getElementById("resultSummary").textContent = data.summary || "";
-    document.getElementById("guide").innerHTML = buildArticle(data);
+    
+    // === САМОЕ ВАЖНОЕ: Вставляем чистый HTML от ИИ ===
+    // Если ИИ прислал новый формат (full_article_html) - используем его.
+    // Если старый (daily_plan) - склеиваем в текст без заголовков "День Х".
+    
+    let finalHtml = "";
+    
+    if (data.full_article_html) {
+        finalHtml = data.full_article_html;
+    } else if (data.daily_plan) {
+        // Фоллбэк, если сервер еще не обновился
+        data.daily_plan.forEach(d => {
+            const arr = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
+            if(arr.length) {
+                // Просто вставляем текст, БЕЗ <H2>ДЕНЬ X</H2>
+                arr.forEach(txt => finalHtml += `<p>${txt}</p>`);
+            }
+        });
+    }
+
+    document.getElementById("guide").innerHTML = `<div class="story-content">${finalHtml}</div>`;
+    
     showScreen("screenResult");
   } catch (e) {
-    alert("Ошибка сервера. Попробуйте еще раз.");
+    console.error(e);
+    alert("Ошибка. Попробуйте еще раз.");
   } finally {
     btn.disabled = false; btn.textContent = i18n[currentLang].generateBtn;
   }
