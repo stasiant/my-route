@@ -5,12 +5,12 @@ const i18n = {
   ru: {
     subtitle: "Планировщик путешествий",
     welcomeTitle: "Привет! Я My Route",
-    welcomeText: "Заполни форму — я соберу маршрут по дням, дам советы и чек‑лист.",
-    features: ["Маршрут единым текстом", "Советы и лайфхаки", "Чек‑лист перед поездкой", "Список точек (в конце)"],
+    welcomeText: "Заполни форму — я создам подробный гид, дам советы и цены.",
+    features: ["Гид в стиле трэвел-блога", "История и цены", "Чек‑лист перед поездкой", "Список точек (в конце)"],
     startBtn: "Создать маршрут",
     priceNote: "1 маршрут = 50⭐ (бесплатно в бете).",
     
-    formTitle: "Параметры", backBtn: "← Назад", 
+    formTitle: "Параметры поездки", backBtn: "← Назад", 
     lblDestination: "Куда едем?",
     lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
     optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", optBudgetPremium: "Премиум",
@@ -18,18 +18,18 @@ const i18n = {
     optPaceSlow: "Спокойно", optPaceNormal: "Нормально", optPaceFast: "Активно",
     lblCompanions: "Кто едет",
     optCompSolo: "Я один", optCompCouple: "Пара", optCompFamily: "Семья", optCompGroup: "Компания",
-    lblNotes: "Пожелания", notesPh: "Люблю парки, не люблю музеи...", notesHelper: "Детали улучшают результат.",
-    generateBtn: "Сгенерировать", formHint: "Ждите 5–15 сек.",
+    lblNotes: "Пожелания", notesPh: "Например: люблю историю, вкусно поесть...", notesHelper: "Чем больше деталей, тем лучше результат.",
+    generateBtn: "Сгенерировать гид", formHint: "Это займет 10–20 секунд.",
     
-    resultTitle: "Готово", newBtn: "Заново",
-    guideTitle: "Ваш маршрут", pointsTitle: "Точки для карты",
-    loading: "Думаю...", errFill: "Укажите куда и на сколько дней.", errApi: "Ошибка генерации."
+    resultTitle: "Ваш гид готов", newBtn: "Новый",
+    guideTitle: "Программа путешествия", pointsTitle: "Карта локаций",
+    loading: "Пишу подробный гид...", errFill: "Напишите, куда едете и на сколько дней.", errApi: "Ошибка генерации. Попробуйте снова."
   },
   en: {
     subtitle: "Travel Planner",
     welcomeTitle: "Hi! I'm My Route",
-    welcomeText: "I'll generate an itinerary, tips, and checklist.",
-    features: ["Single text itinerary", "Tips & Hacks", "Checklist", "Points list"],
+    welcomeText: "I'll generate a detailed travel blog style guide.",
+    features: ["Travel blog style itinerary", "History & Prices", "Checklist", "Map points"],
     startBtn: "Start",
     priceNote: "1 itinerary = 50⭐ (free in beta).",
     
@@ -41,18 +41,18 @@ const i18n = {
     optPaceSlow: "Slow", optPaceNormal: "Normal", optPaceFast: "Fast",
     lblCompanions: "Companions",
     optCompSolo: "Solo", optCompCouple: "Couple", optCompFamily: "Family", optCompGroup: "Group",
-    lblNotes: "Wishes", notesPh: "Love parks, hate museums...", notesHelper: "Details help.",
-    generateBtn: "Generate", formHint: "Wait 5-15s.",
+    lblNotes: "Wishes", notesPh: "Love history, food...", notesHelper: "More details = better guide.",
+    generateBtn: "Generate Guide", formHint: "Takes 10-20 seconds.",
     
-    resultTitle: "Done", newBtn: "New",
-    guideTitle: "Your Route", pointsTitle: "Map Points",
-    loading: "Thinking...", errFill: "Fill destination & days.", errApi: "Error generating."
+    resultTitle: "Guide Ready", newBtn: "New",
+    guideTitle: "Your Itinerary", pointsTitle: "Map Locations",
+    loading: "Writing guide...", errFill: "Fill destination & days.", errApi: "Error generating."
   }
 };
 
 const INTERESTS = [
   { key: "food", ru: "еда", en: "food" }, 
-  { key: "museums", ru: "музеи", en: "museums" },
+  { key: "history", ru: "история", en: "history" },
   { key: "nature", ru: "природа", en: "nature" }, 
   { key: "shopping", ru: "шопинг", en: "shopping" }
 ];
@@ -60,7 +60,6 @@ const INTERESTS = [
 function getLang() { return localStorage.getItem("lang") || "ru"; }
 function setLang(l) { localStorage.setItem("lang", l); render(); }
 
-// --- Управление экранами ---
 function showScreen(screenId) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(id => {
     document.getElementById(id).classList.add("hidden");
@@ -74,7 +73,6 @@ function setText(id, text) {
   if (el && text) el.textContent = text;
 }
 
-// --- Отрисовка интерфейса ---
 function render() {
   const lang = getLang();
   const t = i18n[lang];
@@ -102,18 +100,12 @@ function render() {
   setText("backBtn", t.backBtn);
   setText("generateBtn", t.generateBtn);
   setText("formHint", t.formHint);
-
   setText("resultTitle", t.resultTitle);
   setText("newBtn", t.newBtn);
   setText("guideTitle", t.guideTitle);
   setText("pointsTitle", t.pointsTitle);
 
-  const ids = [
-    "lblDestination", "lblDays", "lblNights", "lblBudget", "lblInterests", "lblPace", "lblCompanions", "lblNotes", "notesHelper",
-    "optBudgetLow", "optBudgetMed", "optBudgetHigh", "optBudgetPremium",
-    "optPaceSlow", "optPaceNormal", "optPaceFast",
-    "optCompSolo", "optCompCouple", "optCompFamily", "optCompGroup"
-  ];
+  const ids = ["lblDestination", "lblDays", "lblNights", "lblBudget", "lblInterests", "lblPace", "lblCompanions", "lblNotes", "notesHelper", "optBudgetLow", "optBudgetMed", "optBudgetHigh", "optBudgetPremium", "optPaceSlow", "optPaceNormal", "optPaceFast", "optCompSolo", "optCompCouple", "optCompFamily", "optCompGroup"];
   ids.forEach(id => { if (t[id]) setText(id, t[id]); });
 
   const notesEl = document.getElementById("notes");
@@ -139,48 +131,55 @@ function render() {
   }
 }
 
-// === КРАСИВАЯ СБОРКА ТЕКСТА (HTML) ===
+// === ФУНКЦИЯ ДЛЯ КРАСИВОГО HTML ===
 function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
   let html = "";
 
-  // 1. Дни
   if (Array.isArray(data.daily_plan)) {
     data.daily_plan.forEach(d => {
-      // Заголовок дня
-      html += `<div class="day-block">`;
-      html += `<div class="day-header">${t("День", "Day")} ${d.day}</div>`;
+      // Блок дня
+      html += `<div class="day-card">`;
+      html += `<div class="day-title">${t("День", "Day")} ${d.day}</div>`;
       
-      // Список активностей (точки)
-      html += `<ul class="day-activities">`;
-      if (d.morning && d.morning.length) {
-         html += `<li><b>${t("Утро","Morning")}:</b> ${d.morning.join(", ")}</li>`;
-      }
-      if (d.afternoon && d.afternoon.length) {
-         html += `<li><b>${t("День","Afternoon")}:</b> ${d.afternoon.join(", ")}</li>`;
-      }
-      if (d.evening && d.evening.length) {
-         html += `<li><b>${t("Вечер","Evening")}:</b> ${d.evening.join(", ")}</li>`;
-      }
-      html += `</ul>`;
-      html += `</div>`;
+      // Список активностей (теперь они будут длинными)
+      html += `<div class="day-content">`;
+      
+      const parts = [
+        { title: t("Утро", "Morning"), items: d.morning },
+        { title: t("День", "Afternoon"), items: d.afternoon },
+        { title: t("Вечер", "Evening"), items: d.evening }
+      ];
+
+      parts.forEach(part => {
+        if (part.items && part.items.length > 0) {
+           html += `<div class="time-block">`;
+           html += `<div class="time-label">${part.title}</div>`;
+           // Мы ожидаем, что AI вернет длинный текст, поэтому просто выводим его
+           part.items.forEach(item => {
+             // Превращаем текст в абзац для читаемости
+             html += `<p class="activity-text">${item}</p>`;
+           });
+           html += `</div>`;
+        }
+      });
+
+      html += `</div></div>`;
     });
   }
 
-  // 2. Советы
   if (Array.isArray(data.tips) && data.tips.length > 0) {
-    html += `<div class="section-block">`;
-    html += `<div class="section-title">💡 ${t("Советы", "Tips")}</div>`;
-    html += `<ul class="simple-list">`;
+    html += `<div class="info-card warning">`;
+    html += `<div class="info-title">💡 ${t("Советы", "Tips")}</div>`;
+    html += `<ul>`;
     data.tips.forEach(x => html += `<li>${x}</li>`);
     html += `</ul></div>`;
   }
 
-  // 3. Чек-лист
   if (Array.isArray(data.checklist) && data.checklist.length > 0) {
-    html += `<div class="section-block">`;
-    html += `<div class="section-title">✅ ${t("Чек-лист", "Checklist")}</div>`;
-    html += `<ul class="simple-list">`;
+    html += `<div class="info-card success">`;
+    html += `<div class="info-title">✅ ${t("Чек-лист", "Checklist")}</div>`;
+    html += `<ul>`;
     data.checklist.forEach(x => html += `<li>${x}</li>`);
     html += `</ul></div>`;
   }
@@ -201,13 +200,20 @@ async function generate() {
   btn.disabled = true; btn.textContent = t.loading;
   
   try {
+    // === ХИТРОСТЬ: СКРЫТЫЙ ПРОМПТ ===
+    // Мы добавляем инструкцию к заметкам пользователя, чтобы AI писал подробно.
+    const userNotes = document.getElementById("notes").value;
+    const systemInstruction = lang === 'ru' 
+      ? " (ВАЖНО: Напиши ОЧЕНЬ ПОДРОБНЫЙ гид в стиле трэвел-блога. Для каждой активности пиши описание, историю места и среднюю ЦЕНУ билета/еды. Не делай просто списки, пиши интересно и развернуто. Придумай название для каждого дня.)"
+      : " (IMPORTANT: Write a VERY DETAILED Travel Blog style guide. For every activity, write a description, history, and PRICE. Do not just list items, describe them. Create a title for each day.)";
+
     const payload = {
       language: lang, destination: dest, days: days,
       budget: document.getElementById("budget").value,
       pace: document.getElementById("pace").value,
       companions: document.getElementById("companions").value,
       interests: Array.from(document.querySelectorAll(".pill.active")).map(x => x.dataset.key),
-      notes: document.getElementById("notes").value
+      notes: userNotes + systemInstruction // <--- Внедряем инструкцию сюда
     };
     
     const res = await fetch(`${API_BASE}/route/generate`, {
@@ -217,15 +223,12 @@ async function generate() {
     if (!res.ok) throw new Error("API Error");
     const data = await res.json();
     
-    // Вставляем Summary
     const summaryEl = document.getElementById("resultSummary");
     if(summaryEl) summaryEl.textContent = data.summary || "";
 
-    // Вставляем Красивый HTML
     const guideEl = document.getElementById("guide");
     if(guideEl) guideEl.innerHTML = buildGuideHTML(data, lang);
     
-    // Вставляем точки
     const pl = document.getElementById("pointsList");
     if (pl) {
       pl.innerHTML = "";
@@ -245,7 +248,6 @@ async function generate() {
   }
 }
 
-// Events
 document.getElementById("btnRu").onclick = () => setLang("ru");
 document.getElementById("btnEn").onclick = () => setLang("en");
 document.getElementById("startBtn").onclick = () => showScreen("screenForm");
@@ -253,6 +255,5 @@ document.getElementById("backBtn").onclick = () => showScreen("screenWelcome");
 document.getElementById("newBtn").onclick = () => showScreen("screenForm");
 document.getElementById("generateBtn").onclick = generate;
 
-// Init
 if (tg) { tg.ready(); tg.expand(); }
 render();

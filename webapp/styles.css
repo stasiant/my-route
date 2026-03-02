@@ -252,3 +252,80 @@ select.input option {
   border-left: 3px solid var(--accent);
   padding-left: 12px;
 }
+
+/* --- СТИЛИ ДЛЯ БЛОГА (RICH CONTENT) --- */
+
+/* Карточка дня */
+.day-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.day-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 8px;
+}
+.day-title::before { content: "📅 "; }
+
+/* Блок времени (Утро/День) */
+.time-block {
+  margin-bottom: 16px;
+}
+
+.time-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+/* Сам текст описания */
+.activity-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 8px 0;
+}
+
+/* Карточки для советов и чек-листа */
+.info-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+}
+.warning { background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); }
+.success { background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); }
+
+.info-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.info-card ul {
+  margin: 0; padding-left: 20px;
+}
+.info-card li {
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Введение */
+#resultSummary {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #fff !important;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: rgba(46, 166, 255, 0.1);
+  border-radius: 8px;
+}
