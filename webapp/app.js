@@ -8,17 +8,50 @@ function showScreen(screenId) {
   window.scrollTo(0, 0);
 }
 
-// Теперь мы просто рендерим готовый HTML от сервера
+// Форматирование текста, если ИИ вернул старый формат (списком)
+function formatParagraph(text) {
+  let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
+  if (clean.includes('**') || clean.includes('*')) {
+    clean = clean.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
+  } else {
+    const parts = clean.split('. ');
+    if (parts.length > 1 && parts[0].length < 100) {
+      clean = `<b>${parts[0]}.</b> ` + parts.slice(1).join('. ');
+    }
+  }
+  return clean;
+}
+
+// Построение статьи
 function buildArticle(data) {
   let html = '';
   if (data.daily_plan && Array.isArray(data.daily_plan)) {
     data.daily_plan.forEach(day => {
-      // Заголовок дня
       html += `<div class="day-block">`;
       html += `<h2 class="day-header">День ${day.day}</h2>`;
       
-      // Вставляем контент, который прислал ИИ (это уже готовый HTML с <p> и <h3>)
-      html += `<div class="day-content">${day.content}</div>`;
+      // 1. ПРОВЕРЯЕМ НОВЫЙ ФОРМАТ (HTML content)
+      if (day.content && typeof day.content === 'string') {
+        html += `<div class="day-content">${day.content}</div>`;
+      } 
+      // 2. ПРОВЕРЯЕМ СТАРЫЙ ФОРМАТ (Массивы morning, afternoon)
+      else {
+        const activities = [];
+        if (day.morning) activities.push(...day.morning);
+        if (day.afternoon) activities.push(...day.afternoon);
+        if (day.evening) activities.push(...day.evening);
+
+        if (activities.length > 0) {
+          html += `<ul class="article-list">`;
+          activities.forEach(act => {
+            html += `<li>${formatParagraph(act)}</li>`;
+          });
+          html += `</ul>`;
+        } else {
+           html += `<p>План на день формируется...</p>`;
+        }
+      }
+      
       html += `</div>`;
     });
   }
@@ -38,8 +71,12 @@ async function generate() {
   try {
     const userNotes = document.getElementById("notes").value;
     
-    // Дублируем инструкцию для надежности
-    const prompt = " (IMPORTANT: Write a long, detailed article with HTML tags <h3> for titles and <p> for text. Include prices and opening hours.)";
+    // Агрессивный промпт для лонгрида
+    const hackPrompt = `
+      (ВНИМАНИЕ СИСТЕМЕ: ПИШИ ОЧЕНЬ ПОДРОБНО! Минимум 100 слов на каждое место.
+      ОБЯЗАТЕЛЬНО указывай: Цены, Часы работы, Как добраться.
+      Если возвращаешь списки (morning/afternoon), делай каждую строку ОГРОМНОЙ по длине, в формате: **Название**. Длинный текст описания с ценами.)
+    `;
 
     const payload = {
       language: "ru",
@@ -49,7 +86,7 @@ async function generate() {
       pace: document.getElementById("pace").value,
       companions: document.getElementById("companions").value,
       interests: [],
-      notes: userNotes + prompt
+      notes: userNotes + hackPrompt
     };
     
     const res = await fetch(`${API_BASE}/route/generate`, {
@@ -61,7 +98,7 @@ async function generate() {
     const data = await res.json();
     
     document.getElementById("articleTitle").textContent = `Путеводитель: ${dest}`;
-    document.getElementById("articleSummary").textContent = data.summary;
+    document.getElementById("articleSummary").textContent = data.summary || "Ваш подробный маршрут.";
     document.getElementById("guideContent").innerHTML = buildArticle(data);
     
     showScreen("screenResult");
@@ -70,7 +107,7 @@ async function generate() {
     alert("Ошибка. Попробуйте снова.");
   } finally {
     btn.disabled = false;
-    btn.textContent = "Сгенерировать";
+    btn.textContent = "Сгенерировать путеводитель";
   }
 }
 
