@@ -158,3 +158,17 @@ select.input option {
   background-color: #0b1220;
   color: white;
 }
+
+/* Гарантированный белый цвет для результата */
+#guide {
+  color: #ffffff !important;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+#resultSummary {
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin-bottom: 15px;
+  font-style: italic;
+}
