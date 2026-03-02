@@ -1,115 +1,119 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>My Route</title>
-
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="container">
+      <!-- HEADER -->
       <header class="header">
         <div class="brand">
           <div class="logo">MR</div>
           <div>
             <div class="title">My Route</div>
-            <div class="subtitle" id="subtitle"></div>
+            <div class="subtitle" id="subtitle">Планировщик путешествий</div>
           </div>
         </div>
-
         <div class="lang">
-          <button class="chip" id="btnRu" type="button">RU</button>
+          <button class="chip active" id="btnRu" type="button">RU</button>
           <button class="chip" id="btnEn" type="button">EN</button>
         </div>
       </header>
 
+      <!-- WELCOME SCREEN -->
       <section class="card" id="screenWelcome">
-        <h1 id="welcomeTitle"></h1>
-        <p id="welcomeText" class="muted"></p>
+        <h1 id="welcomeTitle">Привет! Я My Route</h1>
+        <p id="welcomeText" class="muted">Заполни форму — я соберу маршрут по дням, дам советы и чек‑лист.</p>
+        
+        <ul class="list" id="featureList">
+          <li>Маршрут единым текстом</li>
+          <li>Советы и лайфхаки</li>
+          <li>Чек‑лист перед поездкой</li>
+          <li>Список точек (в конце)</li>
+        </ul>
 
-        <ul class="list" id="featureList"></ul>
-
-        <button class="primary" id="startBtn" type="button"></button>
-        <p class="fineprint" id="priceNote"></p>
+        <button class="primary" id="startBtn" type="button">Создать маршрут</button>
+        <p class="fineprint" id="priceNote">1 маршрут = 50⭐ (бесплатно в бете).</p>
       </section>
 
+      <!-- FORM SCREEN -->
       <section class="card hidden" id="screenForm">
         <div class="row">
-          <h2 id="formTitle" class="h2"></h2>
-          <button class="link" id="backBtn" type="button"></button>
+          <h2 id="formTitle" class="h2">Параметры</h2>
+          <button class="link" id="backBtn" type="button">← Назад</button>
         </div>
 
         <label class="field">
-          <span class="label" id="lblDestination"></span>
-          <input id="destination" class="input" placeholder="e.g., Paris, France" />
+          <span class="label" id="lblDestination">Куда едем?</span>
+          <input id="destination" class="input" placeholder="Например: Париж, Франция" />
         </label>
 
         <div class="grid2">
           <label class="field">
-            <span class="label" id="lblDays"></span>
+            <span class="label" id="lblDays">Дней</span>
             <input id="days" class="input" type="number" min="1" step="1" placeholder="3" />
           </label>
-
           <label class="field">
-            <span class="label" id="lblNights"></span>
-            <input id="nights" class="input" type="number" min="0" step="1" placeholder="2 (optional)" />
+            <span class="label" id="lblNights">Ночей</span>
+            <input id="nights" class="input" type="number" min="0" step="1" placeholder="2" />
           </label>
         </div>
 
         <label class="field">
-          <span class="label" id="lblBudget"></span>
+          <span class="label" id="lblBudget">Бюджет</span>
           <select id="budget" class="input">
-            <option value="low" id="optBudgetLow"></option>
-            <option value="medium" id="optBudgetMed"></option>
-            <option value="high" id="optBudgetHigh"></option>
-            <option value="premium" id="optBudgetPremium"></option>
+            <option value="low" id="optBudgetLow">Эконом</option>
+            <option value="medium" id="optBudgetMed" selected>Средний</option>
+            <option value="high" id="optBudgetHigh">Комфорт</option>
+            <option value="premium" id="optBudgetPremium">Премиум</option>
           </select>
         </label>
 
         <div class="field">
-          <span class="label" id="lblInterests"></span>
-          <div class="chips" id="interests"></div>
+          <span class="label" id="lblInterests">Интересы</span>
+          <div class="chips" id="interests">
+            <!-- Заполняется JS, но добавим дефолт чтобы не пустовало -->
+          </div>
         </div>
 
         <label class="field">
-          <span class="label" id="lblPace"></span>
+          <span class="label" id="lblPace">Темп</span>
           <select id="pace" class="input">
-            <option value="slow" id="optPaceSlow"></option>
-            <option value="normal" id="optPaceNormal"></option>
-            <option value="fast" id="optPaceFast"></option>
+            <option value="slow" id="optPaceSlow">Спокойно</option>
+            <option value="normal" id="optPaceNormal" selected>Нормально</option>
+            <option value="fast" id="optPaceFast">Активно</option>
           </select>
         </label>
 
         <label class="field">
-          <span class="label" id="lblCompanions"></span>
+          <span class="label" id="lblCompanions">Кто едет</span>
           <select id="companions" class="input">
-            <option value="solo" id="optCompSolo"></option>
-            <option value="couple" id="optCompCouple"></option>
-            <option value="family" id="optCompFamily"></option>
-            <option value="group" id="optCompGroup"></option>
+            <option value="solo" id="optCompSolo">Я один</option>
+            <option value="couple" id="optCompCouple" selected>Пара</option>
+            <option value="family" id="optCompFamily">Семья</option>
+            <option value="group" id="optCompGroup">Компания</option>
           </select>
         </label>
 
         <label class="field">
-          <span class="label" id="lblNotes"></span>
-          <textarea id="notes" class="input textarea" rows="4" placeholder=""></textarea>
-          <div class="helper" id="notesHelper"></div>
+          <span class="label" id="lblNotes">Пожелания</span>
+          <textarea id="notes" class="input textarea" rows="4"></textarea>
+          <div class="helper" id="notesHelper">Детали улучшают результат.</div>
         </label>
 
-        <button class="primary" id="generateBtn" type="button"></button>
-        <p class="fineprint" id="formHint"></p>
+        <button class="primary" id="generateBtn" type="button">Сгенерировать</button>
+        <p class="fineprint" id="formHint">Ждите 5–15 сек.</p>
       </section>
 
+      <!-- RESULT SCREEN -->
       <section class="card hidden" id="screenResult">
         <div class="row">
-          <h2 class="h2" id="resultTitle"></h2>
-          <button class="link" id="newBtn" type="button"></button>
+          <h2 class="h2" id="resultTitle">Готово</h2>
+          <button class="link" id="newBtn" type="button">Заново</button>
         </div>
 
         <div class="resultBlock">
@@ -117,22 +121,16 @@
         </div>
 
         <div class="resultBlock">
-          <h3 class="h3" id="planTitle"></h3>
-          <div id="plan"></div>
+          <h3 class="h3" id="guideTitle">Ваш маршрут</h3>
+          <div id="guide" class="guideText"></div>
         </div>
 
         <div class="resultBlock">
-          <h3 class="h3" id="tipsTitle"></h3>
-          <ul class="list" id="tips"></ul>
-        </div>
-
-        <div class="resultBlock">
-          <h3 class="h3" id="checklistTitle"></h3>
-          <ul class="list" id="checklist"></ul>
+          <h3 class="h3" id="pointsTitle">Точки</h3>
+          <ol class="list" id="pointsList"></ol>
         </div>
       </section>
     </main>
-
     <script src="./app.js"></script>
   </body>
 </html>
