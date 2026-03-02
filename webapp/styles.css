@@ -152,3 +152,19 @@ textarea.ios-input {
   font-weight: 600;
   color: #000;
 }
+
+/* СТИЛИ ДЛЯ ВЫПАДАЮЩИХ СПИСКОВ */
+.ios-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  direction: rtl; /* Чтобы текст прижимался вправо, как в iOS */
+  padding-right: 0;
+  color: var(--blue);
+  cursor: pointer;
+}
+
+/* Убираем синюю обводку при клике */
+.ios-select:focus {
+  outline: none;
+}

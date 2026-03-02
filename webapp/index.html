@@ -28,10 +28,10 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <button id="backBtn" class="ios-link">Отмена</button>
             <div style="font-weight:600;">Параметры</div>
-            <div style="width:50px;"></div> <!-- Spacer -->
+            <div style="width:50px;"></div>
         </div>
 
-        <div class="section-header">Маршрут</div>
+        <div class="section-header">МАРШРУТ</div>
         <div class="ios-group">
             <div class="ios-row">
                 <span class="ios-label">Куда</span>
@@ -43,17 +43,41 @@
             </div>
         </div>
 
-        <div class="section-header">Детали</div>
+        <div class="section-header">УСЛОВИЯ</div>
+        <div class="ios-group">
+            <!-- БЮДЖЕТ -->
+            <div class="ios-row">
+                <span class="ios-label">Бюджет</span>
+                <select id="budget" class="ios-input ios-select">
+                    <option value="economy">Эконом</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="high">Высокий</option>
+                    <option value="premium">Премиум</option>
+                </select>
+            </div>
+            <!-- КОМПАНИЯ -->
+            <div class="ios-row">
+                <span class="ios-label">Кто едет</span>
+                <select id="companions" class="ios-input ios-select">
+                    <option value="solo">Один</option>
+                    <option value="couple" selected>Пара</option>
+                    <option value="family">Семья (3-4)</option>
+                    <option value="group">Компания</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-header">ДЕТАЛИ</div>
         <div class="ios-group">
             <div class="ios-row">
-                <textarea id="notes" class="ios-input" style="text-align:left;" placeholder="Ваши пожелания (музеи, еда, темп)..."></textarea>
+                <textarea id="notes" class="ios-input" style="text-align:left;" placeholder="Напишите подробно: люблю музеи, азиатскую кухню, не люблю долгие переходы..."></textarea>
             </div>
         </div>
 
         <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
-      <!-- RESULT (BOOK VIEW) -->
+      <!-- RESULT -->
       <section id="screenResult" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
@@ -67,6 +91,6 @@
       </section>
 
     </main>
-    <script src="./app.js"></script>
+    <script src="./app.js?v=101"></script>
   </body>
 </html>
