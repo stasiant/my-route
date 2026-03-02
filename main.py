@@ -25,25 +25,20 @@ class RouteRequest(BaseModel):
     interests: list[str] = []
     notes: str = ""
 
-# --- НОВАЯ ИНСТРУКЦИЯ: ИИ САМ СТРУКТУРИРУЕТ ТЕКСТ ---
 SYSTEM_PROMPT = """
-You are a Travel Book Author. 
-Your task is to write a **continuous, engaging travel story** (longread).
+You are a Pulitzer Prize-winning Travel Journalist.
+Your task is to write a MASSIVE, deeply engaging travel article.
 
-**RULES:**
-1.  **NO "Day 1" HEADERS:** Do not strictly separate days unless it fits the story flow.
-2.  **NO LISTS:** Do not use bullet points. Write full paragraphs.
-3.  **USE HTML:** You control the formatting.
-    - Use `<h3>` for your own creative titles (e.g., "<h3>Arrival and the Red Square</h3>").
-    - Use `<p>` for text.
-    - Use `<b>` for highlighting places/prices.
-4.  **CONTENT:** Include history, prices, and logistics naturally in the text.
+**CRITICAL RULES:**
+1. ABSOLUTELY NO SHORT SENTENCES OR LISTS. 
+2. Write a continuous story.
+3. For every single location you mention, you MUST write a HUGE paragraph (minimum 100 words) detailing its history, atmosphere, ticket prices, and how to get there.
+4. Format using HTML: <h3> for creative section titles, <p> for the massive text blocks, <b> for emphasis.
 
-**JSON STRUCTURE:**
-Return a JSON with a single "content" field containing the entire HTML article.
+Return exactly this JSON:
 {
   "summary": "Short intro...",
-  "full_article_html": "<h3>Chapter 1: The Heart of the City</h3><p>Start your journey at...</p><h3>Next Morning</h3><p>..."
+  "full_article_html": "<h3>Arrival at the Majestic Red Square</h3><p>As you step onto the cobblestones... [100 words minimum here]... Tickets cost 500 RUB.</p><h3>The Next Chapter</h3><p>...</p>"
 }
 """
 
@@ -52,12 +47,12 @@ async def generate_route(req: RouteRequest):
     if not api_key: raise HTTPException(status_code=500, detail="No API Key")
 
     user_content = f"""
-    Write a travel story about {req.destination} for {req.days} days.
-    Travelers: {req.companions}. Budget: {req.budget}.
-    Language: {req.language}.
-    Wishes: {req.notes}.
+    Destination: {req.destination}
+    Duration: {req.days} days
+    Language: {req.language}
+    Wishes: {req.notes}
     
-    IMPORTANT: Return valid JSON with 'full_article_html'. Do not use bullet points. Write a story.
+    WRITE A HUGE ARTICLE IN HTML. NO SHORT LISTS!
     """
 
     try:
@@ -68,7 +63,7 @@ async def generate_route(req: RouteRequest):
                 {"role": "user", "content": user_content}
             ],
             response_format={"type": "json_object"},
-            temperature=0.8, # Больше креатива
+            temperature=0.8,
             max_tokens=4000
         )
         return json.loads(response.choices[0].message.content)

@@ -6,13 +6,13 @@ const i18n = {
     subtitle: "Трэвел-блог", welcomeTitle: "Привет! Я My Route", welcomeText: "Я напишу для вас уникальную историю путешествия.", startBtn: "Начать",
     formTitle: "Детали", backBtn: "← Назад", lblDestination: "Куда?", lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
     optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", lblNotes: "Пожелания",
-    generateBtn: "Написать историю", resultTitle: "Ваша история", newBtn: "Новый", loading: "Сочиняю рассказ...", errFill: "Заполните поля."
+    generateBtn: "Написать историю", resultTitle: "Ваша история", newBtn: "Новый", loading: "Пишу книгу (30 сек)...", errFill: "Заполните поля."
   },
   en: {
     subtitle: "Travel Blog", welcomeTitle: "Hi! I'm My Route", welcomeText: "I will write a unique travel story for you.", startBtn: "Start",
     formTitle: "Details", backBtn: "← Back", lblDestination: "Where?", lblDays: "Days", lblNights: "Nights", lblBudget: "Budget",
     optBudgetLow: "Low", optBudgetMed: "Medium", optBudgetHigh: "Comfort", lblNotes: "Wishes",
-    generateBtn: "Write Story", resultTitle: "Your Story", newBtn: "New", loading: "Writing story...", errFill: "Fill fields."
+    generateBtn: "Write Story", resultTitle: "Your Story", newBtn: "New", loading: "Writing book...", errFill: "Fill fields."
   }
 };
 
@@ -22,7 +22,6 @@ function render() {
   const t = i18n[currentLang];
   document.getElementById("btnRu").className = `chip ${currentLang === 'ru' ? 'active' : ''}`;
   document.getElementById("btnEn").className = `chip ${currentLang === 'en' ? 'active' : ''}`;
-  
   const ids = ["subtitle", "welcomeTitle", "welcomeText", "startBtn", "formTitle", "backBtn", "lblDestination", "lblDays", "lblNights", "lblBudget", "optBudgetLow", "optBudgetMed", "optBudgetHigh", "lblNotes", "generateBtn", "resultTitle", "newBtn"];
   ids.forEach(id => { const el = document.getElementById(id); if (el && t[id]) el.textContent = t[id]; });
 }
@@ -43,11 +42,7 @@ async function generate() {
   
   try {
     const notes = document.getElementById("notes").value;
-    
-    // Промпт: "Забудь про формат списка"
-    const hackPrompt = currentLang === 'ru' 
-      ? " (ВНИМАНИЕ: Не используй списки! Не пиши 'День 1'. Пиши сплошную красивую статью с заголовками <h3>, как в журнале.)"
-      : " (ATTENTION: No lists! No 'Day 1' headers. Write a beautiful article with <h3> headers like in a magazine.)";
+    const hackPrompt = " (КРИТИЧЕСКИ ВАЖНО: ПИШИ СПЛОШНЫМ ТЕКСТОМ! Никаких списков, никаких коротких предложений! Пиши как писатель. Абзацы должны быть ОГРОМНЫМИ. В каждом абзаце пиши цены и историю. Используй теги <h3> для заголовков и <p> для длинного текста.)";
 
     const payload = {
       language: currentLang, destination: dest, days: days,
@@ -60,30 +55,22 @@ async function generate() {
     
     document.getElementById("resultSummary").textContent = data.summary || "";
     
-    // === САМОЕ ВАЖНОЕ: Вставляем чистый HTML от ИИ ===
-    // Если ИИ прислал новый формат (full_article_html) - используем его.
-    // Если старый (daily_plan) - склеиваем в текст без заголовков "День Х".
-    
     let finalHtml = "";
-    
     if (data.full_article_html) {
         finalHtml = data.full_article_html;
     } else if (data.daily_plan) {
-        // Фоллбэк, если сервер еще не обновился
+        // Если сервер еще не обновился, заставляем старый формат выглядеть как абзацы
         data.daily_plan.forEach(d => {
             const arr = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
             if(arr.length) {
-                // Просто вставляем текст, БЕЗ <H2>ДЕНЬ X</H2>
-                arr.forEach(txt => finalHtml += `<p>${txt}</p>`);
+                arr.forEach(txt => finalHtml += `<p style="margin-bottom: 25px; line-height: 1.6;"><b>${txt}</b></p>`);
             }
         });
     }
 
     document.getElementById("guide").innerHTML = `<div class="story-content">${finalHtml}</div>`;
-    
     showScreen("screenResult");
   } catch (e) {
-    console.error(e);
     alert("Ошибка. Попробуйте еще раз.");
   } finally {
     btn.disabled = false; btn.textContent = i18n[currentLang].generateBtn;
