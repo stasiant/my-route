@@ -109,3 +109,55 @@ select.input {
   background-color: #1a2332;
   color: white;
 }
+
+/* --- СТИЛЬ ЛОНГРИДА (БЕЗ ТОЧЕК) --- */
+
+.blog-article {
+  margin-top: 10px;
+}
+
+/* Заголовок Дня */
+.blog-day-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  margin: 40px 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Список БЕЗ ТОЧЕК */
+.blog-list {
+  margin: 0;
+  padding: 0;
+  list-style: none; /* <--- УБРАЛИ ТОЧКИ СЛЕВА */
+}
+
+.blog-list li {
+  margin-bottom: 30px; /* Большой отступ между абзацами */
+  font-size: 16px;     /* Шрифт чуть крупнее */
+  line-height: 1.7;    /* Читаемый межстрочный интервал */
+  color: rgba(255, 255, 255, 0.95);
+  text-align: left;
+}
+
+/* Жирное название места */
+.blog-list li b, .blog-list li strong {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  display: inline;
+  margin-right: 6px;
+  /* Можно добавить подчеркивание или цвет, если хочешь */
+}
+
+/* Введение */
+#resultSummary {
+  background: transparent;
+  padding: 0;
+  font-style: italic;
+  font-size: 15px;
+  margin-bottom: 30px;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-left: none;
+}

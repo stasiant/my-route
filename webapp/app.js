@@ -5,8 +5,8 @@ const i18n = {
   ru: {
     subtitle: "Трэвел-блогер",
     welcomeTitle: "Привет! Я My Route",
-    welcomeText: "Я напишу для вас подробный путеводитель в стиле блога.",
-    features: ["Подробные описания", "История и цены", "Маршрут по дням", "Карта локаций"],
+    welcomeText: "Я напишу огромный, подробный лонгрид про твое путешествие.",
+    features: ["Максимально подробно", "Без сокращений", "История и цены", "Точки на карте"],
     startBtn: "Начать",
     priceNote: "Бесплатно в бета-версии.",
     formTitle: "Детали поездки", backBtn: "← Назад", 
@@ -18,16 +18,16 @@ const i18n = {
     lblCompanions: "Кто едет",
     optCompSolo: "Я один", optCompCouple: "Пара", optCompFamily: "Семья", optCompGroup: "Компания",
     lblNotes: "Пожелания", notesPh: "Люблю архитектуру, вкусную еду...", notesHelper: "Чем больше деталей, тем интереснее статья.",
-    generateBtn: "Написать гид", formHint: "Пишу статью (15-20 сек)...",
+    generateBtn: "Написать статью", formHint: "Это может занять 20-30 сек...",
     resultTitle: "Ваш путеводитель", newBtn: "Новый",
     guideTitle: "Программа", pointsTitle: "Карта мест",
-    loading: "Пишу статью...", errFill: "Куда едем и на сколько дней?", errApi: "Ошибка. Попробуйте снова."
+    loading: "Пишу лонгрид...", errFill: "Куда едем и на сколько дней?", errApi: "Ошибка. Попробуйте снова."
   },
   en: {
     subtitle: "Travel Blogger",
     welcomeTitle: "Hi! I'm My Route",
-    welcomeText: "I will write a detailed travel-blog style guide for you.",
-    features: ["Detailed descriptions", "History & Prices", "Daily itinerary", "Map locations"],
+    welcomeText: "I will write a massive, detailed longread for you.",
+    features: ["Extremely detailed", "No summaries", "History & Prices", "Map locations"],
     startBtn: "Start",
     priceNote: "Free in beta.",
     formTitle: "Trip Details", backBtn: "← Back", 
@@ -39,7 +39,7 @@ const i18n = {
     lblCompanions: "Companions",
     optCompSolo: "Solo", optCompCouple: "Couple", optCompFamily: "Family", optCompGroup: "Group",
     lblNotes: "Wishes", notesPh: "Architecture, food...", notesHelper: "More details = better article.",
-    generateBtn: "Write Guide", formHint: "Writing article (15-20s)...",
+    generateBtn: "Write Article", formHint: "Takes 20-30s...",
     resultTitle: "Your Guide", newBtn: "New",
     guideTitle: "Itinerary", pointsTitle: "Map Locations",
     loading: "Writing...", errFill: "Fill destination & days.", errApi: "Error."
@@ -128,25 +128,19 @@ function render() {
   }
 }
 
-// Форматируем текст: жирный шрифт
+// === УЛУЧШЕННЫЙ ПАРСЕР ТЕКСТА ===
 function formatAIText(text) {
-  // Убираем "Утро:" и прочее
+  // Убираем заголовки типа "Утро:"
   let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
   
-  // Делаем жирным то, что в звездочках **
-  clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  // ЛОВИМ ЗВЕЗДОЧКИ: и **жирный**, и *жирный*
+  // Регулярка ловит от 1 до 2 звездочек
+  clean = clean.replace(/\*+(.*?)\*+/g, '<b>$1</b>');
   
-  // Если звездочек нет, пробуем выделить первое предложение до точки (если оно короткое) как заголовок
-  if (!clean.includes('<b>')) {
-     const parts = clean.split('. ');
-     if (parts.length > 1 && parts[0].length < 60) {
-        clean = `<b>${parts[0]}.</b> ${parts.slice(1).join('. ')}`;
-     }
-  }
   return clean;
 }
 
-// === СТРОИМ СТАТЬЮ ===
+// === СТРОИМ БЕСКОНЕЧНУЮ СТАТЬЮ ===
 function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
   let html = `<div class="blog-article">`;
@@ -156,13 +150,13 @@ function buildGuideHTML(data, lang) {
       // Заголовок дня
       html += `<h3 class="blog-day-title">${t("День", "Day")} ${d.day}</h3>`;
       
-      // Сливаем всё в один список
       const allActivities = [];
       if (d.morning) allActivities.push(...d.morning);
       if (d.afternoon) allActivities.push(...d.afternoon);
       if (d.evening) allActivities.push(...d.evening);
 
       if (allActivities.length > 0) {
+        // ВАЖНО: Класс blog-list теперь будет без точек (в CSS)
         html += `<ul class="blog-list">`;
         allActivities.forEach(item => {
           html += `<li>${formatAIText(item)}</li>`;
@@ -191,11 +185,10 @@ async function generate() {
   try {
     const userNotes = document.getElementById("notes").value;
     
-    // === САМОЕ ГЛАВНОЕ: ПРИКАЗ ДЛЯ ИИ ===
-    // Это скрытая часть запроса, которая заставляет AI писать много текста.
+    // === САМЫЙ АГРЕССИВНЫЙ ПРОМПТ НА ОБЪЕМ ===
     const systemInstruction = lang === 'ru' 
-      ? " (КРИТИЧЕСКИ ВАЖНО: Не пиши списком дел! Пиши как трэвел-блогер. Для каждого пункта сначала пиши **Название Места** (в звездочках), затем ставь точку, а затем пиши ПОДРОБНОЕ описание на 3-4 предложения: историю, атмосферу, цены билетов. Не разделяй на Утро/Вечер. Просто список мест.)"
-      : " (CRITICAL: Do not write a to-do list! Write like a travel blogger. For every item, start with **Location Name** (in stars), then a period, then a DETAILED paragraph (3-4 sentences) about history, atmosphere, prices. Do not separate Morning/Evening.)";
+      ? " (ВНИМАНИЕ: Пиши МАКСИМАЛЬНО ПОДРОБНО. Никаких сокращений! Про каждое место пиши МИНИМУМ 100 СЛОВ: полную историю, архитектурные детали, цены, легенды. Используй формат: *Название Места*. Текст. НЕ ИСПОЛЬЗУЙ слова Утро/Вечер. Пиши сплошным увлекательным текстом, как в книге.)"
+      : " (ATTENTION: Write in EXTREME DETAIL. No summaries! Write at least 100 WORDS per location: full history, details, prices. Use format: *Location Name*. Text. DO NOT use Morning/Evening labels. Write like a book chapter.)";
 
     const payload = {
       language: lang, destination: dest, days: days,
@@ -213,15 +206,12 @@ async function generate() {
     if (!res.ok) throw new Error("API Error");
     const data = await res.json();
     
-    // Summary
     const summaryEl = document.getElementById("resultSummary");
     if(summaryEl) summaryEl.textContent = data.summary || "";
 
-    // Guide
     const guideEl = document.getElementById("guide");
     if(guideEl) guideEl.innerHTML = buildGuideHTML(data, lang);
     
-    // Points
     const pl = document.getElementById("pointsList");
     if (pl) {
       pl.innerHTML = "";
