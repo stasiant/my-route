@@ -22,7 +22,7 @@ const i18n = {
     generateBtn: "Сгенерировать", formHint: "Ждите 5–15 сек.",
     
     resultTitle: "Готово", newBtn: "Заново",
-    guideTitle: "Ваш маршрут", pointsTitle: "Точки",
+    guideTitle: "Ваш маршрут", pointsTitle: "Точки для карты",
     loading: "Думаю...", errFill: "Укажите куда и на сколько дней.", errApi: "Ошибка генерации."
   },
   en: {
@@ -45,7 +45,7 @@ const i18n = {
     generateBtn: "Generate", formHint: "Wait 5-15s.",
     
     resultTitle: "Done", newBtn: "New",
-    guideTitle: "Your Route", pointsTitle: "Points",
+    guideTitle: "Your Route", pointsTitle: "Map Points",
     loading: "Thinking...", errFill: "Fill destination & days.", errApi: "Error generating."
   }
 };
@@ -79,18 +79,15 @@ function render() {
   const lang = getLang();
   const t = i18n[lang];
 
-  // Кнопки языка
   document.getElementById("btnRu").className = `chip ${lang === 'ru' ? 'active' : ''}`;
   document.getElementById("btnEn").className = `chip ${lang === 'en' ? 'active' : ''}`;
 
-  // Тексты (только обновление, если элемент уже есть)
   setText("subtitle", t.subtitle);
   setText("welcomeTitle", t.welcomeTitle);
   setText("welcomeText", t.welcomeText);
   setText("startBtn", t.startBtn);
   setText("priceNote", t.priceNote);
   
-  // Обновляем список фич
   const ul = document.getElementById("featureList");
   if(ul) {
     ul.innerHTML = "";
@@ -111,7 +108,6 @@ function render() {
   setText("guideTitle", t.guideTitle);
   setText("pointsTitle", t.pointsTitle);
 
-  // Labels и Options
   const ids = [
     "lblDestination", "lblDays", "lblNights", "lblBudget", "lblInterests", "lblPace", "lblCompanions", "lblNotes", "notesHelper",
     "optBudgetLow", "optBudgetMed", "optBudgetHigh", "optBudgetPremium",
@@ -123,10 +119,8 @@ function render() {
   const notesEl = document.getElementById("notes");
   if(notesEl) notesEl.placeholder = t.notesPh;
 
-  // Интересы
   const wrap = document.getElementById("interests");
   if (wrap) {
-    // Если пусто, создаем заново. Если нет - обновляем текст
     if (wrap.children.length === 0) {
       INTERESTS.forEach(it => {
         const el = document.createElement("div");
@@ -145,31 +139,53 @@ function render() {
   }
 }
 
-function buildGuideText(data, lang) {
+// === КРАСИВАЯ СБОРКА ТЕКСТА (HTML) ===
+function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
-  let lines = [];
-  if (data.summary) { lines.push(String(data.summary)); lines.push(""); }
+  let html = "";
+
+  // 1. Дни
   if (Array.isArray(data.daily_plan)) {
-    lines.push(t("=== МАРШРУТ ===", "=== ITINERARY ==="));
     data.daily_plan.forEach(d => {
-      lines.push("");
-      lines.push(t(`📍 День ${d.day}`, `📍 Day ${d.day}`));
-      if (d.morning?.length) lines.push(`${t("Утро","Morning")}: ${d.morning.join(", ")}`);
-      if (d.afternoon?.length) lines.push(`${t("День","Afternoon")}: ${d.afternoon.join(", ")}`);
-      if (d.evening?.length) lines.push(`${t("Вечер","Evening")}: ${d.evening.join(", ")}`);
+      // Заголовок дня
+      html += `<div class="day-block">`;
+      html += `<div class="day-header">${t("День", "Day")} ${d.day}</div>`;
+      
+      // Список активностей (точки)
+      html += `<ul class="day-activities">`;
+      if (d.morning && d.morning.length) {
+         html += `<li><b>${t("Утро","Morning")}:</b> ${d.morning.join(", ")}</li>`;
+      }
+      if (d.afternoon && d.afternoon.length) {
+         html += `<li><b>${t("День","Afternoon")}:</b> ${d.afternoon.join(", ")}</li>`;
+      }
+      if (d.evening && d.evening.length) {
+         html += `<li><b>${t("Вечер","Evening")}:</b> ${d.evening.join(", ")}</li>`;
+      }
+      html += `</ul>`;
+      html += `</div>`;
     });
-    lines.push("");
   }
-  if (Array.isArray(data.tips)) {
-    lines.push(t("=== СОВЕТЫ ===", "=== TIPS ==="));
-    data.tips.forEach(x => lines.push(`💡 ${x}`));
-    lines.push("");
+
+  // 2. Советы
+  if (Array.isArray(data.tips) && data.tips.length > 0) {
+    html += `<div class="section-block">`;
+    html += `<div class="section-title">💡 ${t("Советы", "Tips")}</div>`;
+    html += `<ul class="simple-list">`;
+    data.tips.forEach(x => html += `<li>${x}</li>`);
+    html += `</ul></div>`;
   }
-  if (Array.isArray(data.checklist)) {
-    lines.push(t("=== ЧЕК-ЛИСТ ===", "=== CHECKLIST ==="));
-    data.checklist.forEach(x => lines.push(`✅ ${x}`));
+
+  // 3. Чек-лист
+  if (Array.isArray(data.checklist) && data.checklist.length > 0) {
+    html += `<div class="section-block">`;
+    html += `<div class="section-title">✅ ${t("Чек-лист", "Checklist")}</div>`;
+    html += `<ul class="simple-list">`;
+    data.checklist.forEach(x => html += `<li>${x}</li>`);
+    html += `</ul></div>`;
   }
-  return lines.join("\n");
+
+  return html;
 }
 
 async function generate() {
@@ -201,9 +217,15 @@ async function generate() {
     if (!res.ok) throw new Error("API Error");
     const data = await res.json();
     
-    setText("resultSummary", data.summary || "");
-    setText("guide", buildGuideText(data, lang));
+    // Вставляем Summary
+    const summaryEl = document.getElementById("resultSummary");
+    if(summaryEl) summaryEl.textContent = data.summary || "";
+
+    // Вставляем Красивый HTML
+    const guideEl = document.getElementById("guide");
+    if(guideEl) guideEl.innerHTML = buildGuideHTML(data, lang);
     
+    // Вставляем точки
     const pl = document.getElementById("pointsList");
     if (pl) {
       pl.innerHTML = "";
@@ -216,6 +238,7 @@ async function generate() {
     
     showScreen("screenResult");
   } catch (e) {
+    console.error(e);
     alert(t.errApi);
   } finally {
     btn.disabled = false; btn.textContent = t.generateBtn;
@@ -232,5 +255,4 @@ document.getElementById("generateBtn").onclick = generate;
 
 // Init
 if (tg) { tg.ready(); tg.expand(); }
-// Запускаем рендер сразу, чтобы обновить язык (если сохранен EN)
 render();

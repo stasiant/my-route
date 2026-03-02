@@ -172,3 +172,83 @@ select.input option {
   margin-bottom: 15px;
   font-style: italic;
 }
+
+/* --- Красивое оформление маршрута (Travel Blog Style) --- */
+
+/* Блок одного дня */
+.day-block {
+  margin-bottom: 24px;
+}
+
+/* Заголовок дня (например, "День 1") */
+.day-header {
+  font-weight: 700;
+  font-size: 17px;
+  color: #ffffff;
+  margin-bottom: 8px;
+  /* Добавим иконку пина перед текстом через CSS, если хочешь, или оставим как есть */
+}
+.day-header::before {
+  content: "📍 ";
+}
+
+/* Список активностей дня */
+.day-activities {
+  margin: 0;
+  padding-left: 0; /* Убираем стандартный отступ */
+  list-style: none; /* Убираем стандартные точки */
+}
+
+.day-activities li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  padding-left: 0;
+}
+
+/* Жирный текст (Утро/День/Вечер) подсвечиваем белым */
+.day-activities b {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Блоки советов и чек-листа */
+.section-block {
+  margin-top: 30px;
+  border-top: 1px solid var(--border);
+  padding-top: 15px;
+}
+
+.section-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+/* Простой список для советов */
+.simple-list {
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.simple-list li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+/* Сам контейнер текста */
+#guide {
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* Суммари (введение) курсивом */
+#resultSummary {
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin-bottom: 20px;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
