@@ -1,9 +1,9 @@
 :root {
   --bg: #0b1220;
-  --card: rgba(255, 255, 255, 0.06);
-  --text: rgba(255, 255, 255, 0.92);
+  --card: rgba(255, 255, 255, 0.05);
+  --text: rgba(255, 255, 255, 0.95);
   --muted: rgba(255, 255, 255, 0.7);
-  --border: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.15);
   --accent: #2ea6ff;
 }
 
@@ -15,480 +15,97 @@ body {
               radial-gradient(900px 700px at 90% 20%, rgba(138,92,255,0.16), transparent),
               var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
 }
 
 .container { padding: 16px; max-width: 760px; margin: 0 auto; }
 
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; padding: 10px 0 16px;
-}
-
+.header { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 16px; }
 .brand { display: flex; align-items: center; gap: 12px; }
-.logo {
-  width: 42px; height: 42px; border-radius: 12px;
-  background: rgba(46,166,255,0.18);
-  border: 1px solid var(--border);
-  display: grid; place-items: center;
-  font-weight: 700;
-}
+.logo { width: 42px; height: 42px; border-radius: 12px; background: rgba(46,166,255,0.18); border: 1px solid var(--border); display: grid; place-items: center; font-weight: 700; }
 .title { font-weight: 700; font-size: 16px; }
-.subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.subtitle { font-size: 12px; color: var(--muted); }
 
-.lang { display: flex; gap: 8px; }
-.chip {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.chip.active {
-  border-color: rgba(46,166,255,0.9);
-  background: rgba(46,166,255,0.16);
-}
+.chip { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+.chip.active { border-color: var(--accent); background: rgba(46,166,255,0.15); }
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-}
-
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
 .hidden { display: none !important; }
 
-.muted { color: var(--muted); line-height: 1.5; }
-.list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
+.primary { width: 100%; padding: 14px; border-radius: 14px; border: 0; background: var(--accent); color: #00101c; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 15px; }
 
-.primary {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 0;
-  background: var(--accent);
-  color: #00101c;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.fineprint { margin-top: 10px; font-size: 12px; color: var(--muted); }
-
-.h2 { margin: 0; font-size: 16px; }
-.h3 { margin: 0 0 6px; font-size: 14px; color: rgba(255,255,255,0.9); }
-
-.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-
-.link {
-  background: transparent;
-  border: 0;
-  color: rgba(46,166,255,0.95);
-  cursor: pointer;
-  padding: 8px 10px;
-}
-
-.field { display: block; margin-top: 12px; }
-.label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-
-.input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(0,0,0,0.18);
-  color: var(--text);
-  outline: none;
-}
-
+/* Формы */
+.field { display: block; margin-top: 14px; }
+.label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: white; font-size: 16px; outline: none; }
 .textarea { resize: vertical; }
-
-.helper {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.62);
-  line-height: 1.35;
-}
-
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+/* Интересы */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { border: 1px solid var(--border); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.pill.active { border-color: var(--accent); background: rgba(46,166,255,0.2); }
 
-.pill {
-  border: 1px solid var(--border);
-  background: rgba(0,0,0,0.12);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 13px;
-}
-.pill.active {
-  border-color: rgba(46,166,255,0.9);
-  background: rgba(46,166,255,0.16);
-}
-
-.resultBlock { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
-
-/* Новый стиль для сплошного текста */
-.guideText {
-  white-space: pre-wrap;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-/* Фикс для выпадающих списков на iPhone/Mac */
-select.input {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 30px;
-  color: var(--text);
-  background-color: rgba(255,255,255,0.08); /* Чуть светлее фон */
-}
-
-/* Цвет опций внутри списка (чтобы не было белое на белом) */
-select.input option {
-  background-color: #0b1220;
-  color: white;
-}
-
-/* Гарантированный белый цвет для результата */
-#guide {
-  color: #ffffff !important;
-  white-space: pre-wrap;
-  line-height: 1.6;
-  font-size: 14px;
-}
-
-#resultSummary {
-  color: rgba(255, 255, 255, 0.8) !important;
-  margin-bottom: 15px;
-  font-style: italic;
-}
-
-/* --- Красивое оформление маршрута (Travel Blog Style) --- */
-
-/* Блок одного дня */
-.day-block {
-  margin-bottom: 24px;
-}
-
-/* Заголовок дня (например, "День 1") */
-.day-header {
-  font-weight: 700;
-  font-size: 17px;
-  color: #ffffff;
-  margin-bottom: 8px;
-  /* Добавим иконку пина перед текстом через CSS, если хочешь, или оставим как есть */
-}
-.day-header::before {
-  content: "📍 ";
-}
-
-/* Список активностей дня */
-.day-activities {
-  margin: 0;
-  padding-left: 0; /* Убираем стандартный отступ */
-  list-style: none; /* Убираем стандартные точки */
-}
-
-.day-activities li {
-  margin-bottom: 6px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
-  padding-left: 0;
-}
-
-/* Жирный текст (Утро/День/Вечер) подсвечиваем белым */
-.day-activities b {
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Блоки советов и чек-листа */
-.section-block {
-  margin-top: 30px;
-  border-top: 1px solid var(--border);
-  padding-top: 15px;
-}
-
-.section-title {
-  font-weight: 700;
-  font-size: 16px;
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-/* Простой список для советов */
-.simple-list {
-  margin: 0;
-  padding-left: 20px;
-  color: rgba(255, 255, 255, 0.85);
-}
-.simple-list li {
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-/* Сам контейнер текста */
-#guide {
-  font-size: 15px;
-  color: var(--text);
-}
-
-/* Суммари (введение) курсивом */
-#resultSummary {
-  font-style: italic;
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.8) !important;
-  margin-bottom: 20px;
-  border-left: 3px solid var(--accent);
-  padding-left: 12px;
-}
-
-/* --- СТИЛИ ДЛЯ БЛОГА (RICH CONTENT) --- */
-
-/* Карточка дня */
-.day-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-}
-
-.day-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 8px;
-}
-.day-title::before { content: "📅 "; }
-
-/* Блок времени (Утро/День) */
-.time-block {
-  margin-bottom: 16px;
-}
-
-.time-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-/* Сам текст описания */
-.activity-text {
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 8px 0;
-}
-
-/* Карточки для советов и чек-листа */
-.info-card {
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 20px;
-}
-.warning { background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); }
-.success { background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); }
-
-.info-title {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #fff;
-}
-
-.info-card ul {
-  margin: 0; padding-left: 20px;
-}
-.info-card li {
-  margin-bottom: 6px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* Введение */
-#resultSummary {
-  font-size: 16px;
-  line-height: 1.5;
-  color: #fff !important;
-  margin-bottom: 24px;
-  padding: 12px;
-  background: rgba(46, 166, 255, 0.1);
-  border-radius: 8px;
-}
-
-/* --- СТИЛЬ СПЛОШНОЙ СТАТЬИ --- */
+/* --- СТИЛЬ ПУТЕВОДИТЕЛЯ (BLOG STYLE) --- */
 
 .blog-article {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
-  line-height: 1.6;
+  margin-top: 10px;
 }
 
 /* Заголовок Дня */
 .blog-day-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 30px 0 15px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-/* Сплошной список активностей */
-.blog-list {
-  margin: 0;
-  padding-left: 20px; /* Отступ для точек списка */
-}
-
-.blog-list li {
-  margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  padding-left: 4px;
-}
-
-/* Жирный шрифт для названий мест (которые сделает ИИ) */
-.blog-list li b, 
-.blog-list li strong {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* Убираем старые карточки из результата, чтобы он был прозрачным фоном */
-#screenResult .resultBlock {
-  border: none;
-  padding: 0;
-  margin-top: 10px;
-}
-
-/* --- СТИЛЬ СПЛОШНОЙ СТАТЬИ --- */
-
-.blog-article {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-/* Заголовок Дня (Без фоновой карточки) */
-.blog-day-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 30px 0 15px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-/* Сплошной список активностей */
-.blog-list {
-  margin: 0;
-  padding-left: 20px; /* Отступ для точек списка */
-}
-
-.blog-list li {
-  margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  padding-left: 4px;
-}
-
-/* Жирный шрифт для названий мест */
-.blog-list li b, 
-.blog-list li strong {
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-/* Убираем рамки и фоны из блока результатов, чтобы текст был сплошным на синем фоне */
-#screenResult .resultBlock {
-  border: none;
-  padding: 0;
-  margin-top: 10px;
-}
-
-#guideTitle {
-  display: none; /* Скрываем лишний заголовок "Ваш маршрут" */
-}
-
-/* --- СТИЛЬ ПУТЕВОДИТЕЛЯ --- */
-
-/* Контейнер текста */
-.blog-article {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
   color: #fff;
-}
-
-/* Заголовок "День X" */
-.blog-day-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 32px 0 16px 0;
-  padding-bottom: 8px;
+  margin: 32px 0 20px 0;
+  padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Список */
+/* Список мест */
 .blog-list {
   margin: 0;
-  padding-left: 20px; /* Отступ для стандартных точек */
-  list-style-type: disc; /* Обычные круглые точки */
+  padding-left: 20px; /* Стандартные точки */
 }
 
 .blog-list li {
-  margin-bottom: 20px; /* Расстояние между местами */
+  margin-bottom: 24px; /* Отступ между блоками текста */
   font-size: 15px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9); /* Чуть приглушенный текст описания */
+  color: rgba(255, 255, 255, 0.9); /* Светлый текст */
+  text-align: left;
 }
 
-/* Название места (жирное) */
-.blog-list li b, 
-.blog-list li strong {
-  color: #ffffff; /* Ярко-белый */
-  font-weight: 700;
+/* Жирное название места */
+.blog-list li b, .blog-list li strong {
   font-size: 16px;
-}
-
-/* Очистка стилей результата */
-#screenResult .resultBlock {
-  border: none;
-  padding: 0;
-  background: transparent;
-}
-
-/* Скрываем ненужные заголовки */
-#guideTitle, #pointsTitle {
-  margin-top: 30px;
-  font-size: 18px;
+  font-weight: 700;
   color: #fff;
-  opacity: 0.8;
+  display: inline; /* Чтобы шло в строку с текстом */
 }
 
-/* Вводный текст (summary) */
+/* Введение */
 #resultSummary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   padding: 16px;
   border-radius: 12px;
   font-style: italic;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #fff !important;
   margin-bottom: 20px;
-  border-left: 4px solid #4ca5ff;
+  border-left: 4px solid var(--accent);
+  line-height: 1.5;
+}
+
+/* Убираем лишнее оформление у списка результатов */
+#screenResult .resultBlock {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* Фикс для селектов */
+select.input {
+  appearance: none;
+  background-color: #1a2332;
+  color: white;
 }

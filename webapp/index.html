@@ -15,7 +15,7 @@
           <div class="logo">MR</div>
           <div>
             <div class="title">My Route</div>
-            <div class="subtitle" id="subtitle">Планировщик путешествий</div>
+            <div class="subtitle" id="subtitle">Трэвел-блогер</div>
           </div>
         </div>
         <div class="lang">
@@ -24,32 +24,32 @@
         </div>
       </header>
 
-      <!-- WELCOME SCREEN -->
+      <!-- WELCOME -->
       <section class="card" id="screenWelcome">
         <h1 id="welcomeTitle">Привет! Я My Route</h1>
-        <p id="welcomeText" class="muted">Заполни форму — я соберу маршрут по дням, дам советы и чек‑лист.</p>
+        <p id="welcomeText" class="muted">Я напишу подробный путеводитель в стиле трэвел-блога: с историей, ценами и советами.</p>
         
         <ul class="list" id="featureList">
-          <li>Маршрут единым текстом</li>
-          <li>Советы и лайфхаки</li>
-          <li>Чек‑лист перед поездкой</li>
-          <li>Список точек (в конце)</li>
+          <li>Подробные описания мест</li>
+          <li>История и лайфхаки</li>
+          <li>Маршрут по дням</li>
+          <li>Точки на карте</li>
         </ul>
 
-        <button class="primary" id="startBtn" type="button">Создать маршрут</button>
-        <p class="fineprint" id="priceNote">1 маршрут = 50⭐ (бесплатно в бете).</p>
+        <button class="primary" id="startBtn" type="button">Начать</button>
+        <p class="fineprint" id="priceNote">Бесплатно в бета-версии.</p>
       </section>
 
-      <!-- FORM SCREEN -->
+      <!-- FORM -->
       <section class="card hidden" id="screenForm">
         <div class="row">
-          <h2 id="formTitle" class="h2">Параметры</h2>
+          <h2 id="formTitle" class="h2">Детали поездки</h2>
           <button class="link" id="backBtn" type="button">← Назад</button>
         </div>
 
         <label class="field">
-          <span class="label" id="lblDestination">Куда едем?</span>
-          <input id="destination" class="input" placeholder="Например: Париж, Франция" />
+          <span class="label" id="lblDestination">Город или страна</span>
+          <input id="destination" class="input" placeholder="Например: Рим, Италия" />
         </label>
 
         <div class="grid2">
@@ -68,24 +68,22 @@
           <select id="budget" class="input">
             <option value="low" id="optBudgetLow">Эконом</option>
             <option value="medium" id="optBudgetMed" selected>Средний</option>
-            <option value="high" id="optBudgetHigh">Комфорт</option>
+            <option value="high" id="optBudgetHigh">Высокий</option>
             <option value="premium" id="optBudgetPremium">Премиум</option>
           </select>
         </label>
 
         <div class="field">
           <span class="label" id="lblInterests">Интересы</span>
-          <div class="chips" id="interests">
-            <!-- Заполняется JS, но добавим дефолт чтобы не пустовало -->
-          </div>
+          <div class="chips" id="interests"></div>
         </div>
 
         <label class="field">
           <span class="label" id="lblPace">Темп</span>
           <select id="pace" class="input">
-            <option value="slow" id="optPaceSlow">Спокойно</option>
-            <option value="normal" id="optPaceNormal" selected>Нормально</option>
-            <option value="fast" id="optPaceFast">Активно</option>
+            <option value="slow" id="optPaceSlow">Расслабленный</option>
+            <option value="normal" id="optPaceNormal" selected>Обычный</option>
+            <option value="fast" id="optPaceFast">Насыщенный</option>
           </select>
         </label>
 
@@ -100,20 +98,20 @@
         </label>
 
         <label class="field">
-          <span class="label" id="lblNotes">Пожелания</span>
+          <span class="label" id="lblNotes">Пожелания (важно!)</span>
           <textarea id="notes" class="input textarea" rows="4"></textarea>
-          <div class="helper" id="notesHelper">Детали улучшают результат.</div>
+          <div class="helper" id="notesHelper">Напишите, что любите, чтобы гид был точнее.</div>
         </label>
 
-        <button class="primary" id="generateBtn" type="button">Сгенерировать</button>
-        <p class="fineprint" id="formHint">Ждите 5–15 сек.</p>
+        <button class="primary" id="generateBtn" type="button">Написать гид</button>
+        <p class="fineprint" id="formHint">Это займет 15–20 секунд.</p>
       </section>
 
-      <!-- RESULT SCREEN -->
+      <!-- RESULT -->
       <section class="card hidden" id="screenResult">
         <div class="row">
-          <h2 class="h2" id="resultTitle">Готово</h2>
-          <button class="link" id="newBtn" type="button">Заново</button>
+          <h2 class="h2" id="resultTitle">Ваш путеводитель</h2>
+          <button class="link" id="newBtn" type="button">Новый</button>
         </div>
 
         <div class="resultBlock">
@@ -121,12 +119,11 @@
         </div>
 
         <div class="resultBlock">
-          <h3 class="h3" id="guideTitle">Ваш маршрут</h3>
           <div id="guide" class="guideText"></div>
         </div>
 
         <div class="resultBlock">
-          <h3 class="h3" id="pointsTitle">Точки</h3>
+          <h3 class="h3" id="pointsTitle" style="margin-top: 30px; border-top: 1px solid #ffffff20; padding-top: 20px;">Карта мест</h3>
           <ol class="list" id="pointsList"></ol>
         </div>
       </section>
