@@ -5,8 +5,8 @@ const i18n = {
   ru: {
     subtitle: "Планировщик путешествий",
     welcomeTitle: "Привет! Я My Route",
-    welcomeText: "Заполни форму — я создам подробный гид, дам советы и цены.",
-    features: ["Гид в стиле трэвел-блога", "История и цены", "Чек‑лист перед поездкой", "Список точек (в конце)"],
+    welcomeText: "Заполни форму — я создам подробный гид сплошным текстом.",
+    features: ["Гид в стиле статьи", "История и цены", "Чек‑лист перед поездкой", "Список точек (в конце)"],
     startBtn: "Создать маршрут",
     priceNote: "1 маршрут = 50⭐ (бесплатно в бете).",
     
@@ -21,15 +21,15 @@ const i18n = {
     lblNotes: "Пожелания", notesPh: "Например: люблю историю, вкусно поесть...", notesHelper: "Чем больше деталей, тем лучше результат.",
     generateBtn: "Сгенерировать гид", formHint: "Это займет 10–20 секунд.",
     
-    resultTitle: "Ваш гид готов", newBtn: "Новый",
-    guideTitle: "Программа путешествия", pointsTitle: "Карта локаций",
-    loading: "Пишу подробный гид...", errFill: "Напишите, куда едете и на сколько дней.", errApi: "Ошибка генерации. Попробуйте снова."
+    resultTitle: "Программа путешествия", newBtn: "Новый",
+    guideTitle: "Ваш маршрут", pointsTitle: "Карта локаций",
+    loading: "Пишу статью...", errFill: "Напишите, куда едете и на сколько дней.", errApi: "Ошибка генерации. Попробуйте снова."
   },
   en: {
     subtitle: "Travel Planner",
     welcomeTitle: "Hi! I'm My Route",
-    welcomeText: "I'll generate a detailed travel blog style guide.",
-    features: ["Travel blog style itinerary", "History & Prices", "Checklist", "Map points"],
+    welcomeText: "I'll generate a detailed continuous guide.",
+    features: ["Article style itinerary", "History & Prices", "Checklist", "Map points"],
     startBtn: "Start",
     priceNote: "1 itinerary = 50⭐ (free in beta).",
     
@@ -44,9 +44,9 @@ const i18n = {
     lblNotes: "Wishes", notesPh: "Love history, food...", notesHelper: "More details = better guide.",
     generateBtn: "Generate Guide", formHint: "Takes 10-20 seconds.",
     
-    resultTitle: "Guide Ready", newBtn: "New",
-    guideTitle: "Your Itinerary", pointsTitle: "Map Locations",
-    loading: "Writing guide...", errFill: "Fill destination & days.", errApi: "Error generating."
+    resultTitle: "Itinerary", newBtn: "New",
+    guideTitle: "Your Route", pointsTitle: "Map Locations",
+    loading: "Writing article...", errFill: "Fill destination & days.", errApi: "Error generating."
   }
 };
 
@@ -131,59 +131,49 @@ function render() {
   }
 }
 
-// === ФУНКЦИЯ ДЛЯ КРАСИВОГО HTML ===
+// === ФОРМАТ СПЛОШНОЙ СТАТЬИ ===
 function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
-  let html = "";
+  let html = `<div class="blog-article">`;
 
   if (Array.isArray(data.daily_plan)) {
     data.daily_plan.forEach(d => {
-      // Блок дня
-      html += `<div class="day-card">`;
-      html += `<div class="day-title">${t("День", "Day")} ${d.day}</div>`;
+      // Заголовок дня (просто текст, без карточек)
+      html += `<h3 class="blog-day-title">${t("День", "Day")} ${d.day}</h3>`;
       
-      // Список активностей (теперь они будут длинными)
-      html += `<div class="day-content">`;
-      
-      const parts = [
-        { title: t("Утро", "Morning"), items: d.morning },
-        { title: t("День", "Afternoon"), items: d.afternoon },
-        { title: t("Вечер", "Evening"), items: d.evening }
-      ];
+      // Собираем всё (утро, день, вечер) в один единый массив
+      const allActivities = [];
+      if (d.morning) allActivities.push(...d.morning);
+      if (d.afternoon) allActivities.push(...d.afternoon);
+      if (d.evening) allActivities.push(...d.evening);
 
-      parts.forEach(part => {
-        if (part.items && part.items.length > 0) {
-           html += `<div class="time-block">`;
-           html += `<div class="time-label">${part.title}</div>`;
-           // Мы ожидаем, что AI вернет длинный текст, поэтому просто выводим его
-           part.items.forEach(item => {
-             // Превращаем текст в абзац для читаемости
-             html += `<p class="activity-text">${item}</p>`;
-           });
-           html += `</div>`;
-        }
-      });
-
-      html += `</div></div>`;
+      // Выводим сплошным списком с точками
+      if (allActivities.length > 0) {
+        html += `<ul class="blog-list">`;
+        allActivities.forEach(item => {
+          html += `<li>${item}</li>`;
+        });
+        html += `</ul>`;
+      }
     });
   }
 
+  // Добавляем советы без цветастых карточек
   if (Array.isArray(data.tips) && data.tips.length > 0) {
-    html += `<div class="info-card warning">`;
-    html += `<div class="info-title">💡 ${t("Советы", "Tips")}</div>`;
-    html += `<ul>`;
+    html += `<h3 class="blog-day-title">💡 ${t("Советы", "Tips")}</h3>`;
+    html += `<ul class="blog-list">`;
     data.tips.forEach(x => html += `<li>${x}</li>`);
-    html += `</ul></div>`;
+    html += `</ul>`;
   }
 
   if (Array.isArray(data.checklist) && data.checklist.length > 0) {
-    html += `<div class="info-card success">`;
-    html += `<div class="info-title">✅ ${t("Чек-лист", "Checklist")}</div>`;
-    html += `<ul>`;
+    html += `<h3 class="blog-day-title">✅ ${t("Чек-лист", "Checklist")}</h3>`;
+    html += `<ul class="blog-list">`;
     data.checklist.forEach(x => html += `<li>${x}</li>`);
-    html += `</ul></div>`;
+    html += `</ul>`;
   }
 
+  html += `</div>`;
   return html;
 }
 
@@ -200,12 +190,12 @@ async function generate() {
   btn.disabled = true; btn.textContent = t.loading;
   
   try {
-    // === ХИТРОСТЬ: СКРЫТЫЙ ПРОМПТ ===
-    // Мы добавляем инструкцию к заметкам пользователя, чтобы AI писал подробно.
     const userNotes = document.getElementById("notes").value;
+    
+    // СТРОГАЯ ИНСТРУКЦИЯ ДЛЯ ИИ: Делать жирным места и писать сплошным текстом
     const systemInstruction = lang === 'ru' 
-      ? " (ВАЖНО: Напиши ОЧЕНЬ ПОДРОБНЫЙ гид в стиле трэвел-блога. Для каждой активности пиши описание, историю места и среднюю ЦЕНУ билета/еды. Не делай просто списки, пиши интересно и развернуто. Придумай название для каждого дня.)"
-      : " (IMPORTANT: Write a VERY DETAILED Travel Blog style guide. For every activity, write a description, history, and PRICE. Do not just list items, describe them. Create a title for each day.)";
+      ? " (ИНСТРУКЦИЯ ДЛЯ ИИ: Не пиши слова Утро/День/Вечер! Просто перечисляй места. Каждый пункт ВСЕГДА начинай с названия локации, обернутого в тег <b>Название</b>, затем ставь точку и пиши 3-4 предложения с историей, описанием и ценой.)"
+      : " (AI INSTRUCTION: Do not write Morning/Afternoon/Evening! Start every item with the location name wrapped in <b>Name</b> tags, followed by a period and a detailed 3-4 sentence description with history and prices.)";
 
     const payload = {
       language: lang, destination: dest, days: days,
@@ -213,7 +203,7 @@ async function generate() {
       pace: document.getElementById("pace").value,
       companions: document.getElementById("companions").value,
       interests: Array.from(document.querySelectorAll(".pill.active")).map(x => x.dataset.key),
-      notes: userNotes + systemInstruction // <--- Внедряем инструкцию сюда
+      notes: userNotes + systemInstruction
     };
     
     const res = await fetch(`${API_BASE}/route/generate`, {
