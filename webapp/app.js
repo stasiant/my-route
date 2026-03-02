@@ -21,8 +21,8 @@ const i18n = {
     lblNotes: "Пожелания", notesPh: "Например: люблю историю, вкусно поесть...", notesHelper: "Чем больше деталей, тем лучше результат.",
     generateBtn: "Сгенерировать гид", formHint: "Это займет 10–20 секунд.",
     
-    resultTitle: "Программа путешествия", newBtn: "Новый",
-    guideTitle: "Ваш маршрут", pointsTitle: "Карта локаций",
+    resultTitle: "Ваш маршрут", newBtn: "Новый",
+    guideTitle: "Программа путешествия", pointsTitle: "Карта локаций",
     loading: "Пишу статью...", errFill: "Напишите, куда едете и на сколько дней.", errApi: "Ошибка генерации. Попробуйте снова."
   },
   en: {
@@ -44,8 +44,8 @@ const i18n = {
     lblNotes: "Wishes", notesPh: "Love history, food...", notesHelper: "More details = better guide.",
     generateBtn: "Generate Guide", formHint: "Takes 10-20 seconds.",
     
-    resultTitle: "Itinerary", newBtn: "New",
-    guideTitle: "Your Route", pointsTitle: "Map Locations",
+    resultTitle: "Your Route", newBtn: "New",
+    guideTitle: "Itinerary", pointsTitle: "Map Locations",
     loading: "Writing article...", errFill: "Fill destination & days.", errApi: "Error generating."
   }
 };
@@ -131,6 +131,13 @@ function render() {
   }
 }
 
+// Форматируем текст от ИИ: выделяем жирным то, что в звездочках **, и убираем "Утро:" если ИИ тупит
+function formatAIText(text) {
+  let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
+  clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  return clean;
+}
+
 // === ФОРМАТ СПЛОШНОЙ СТАТЬИ ===
 function buildGuideHTML(data, lang) {
   const t = (r, e) => (lang === "ru" ? r : e);
@@ -138,38 +145,39 @@ function buildGuideHTML(data, lang) {
 
   if (Array.isArray(data.daily_plan)) {
     data.daily_plan.forEach(d => {
-      // Заголовок дня (просто текст, без карточек)
+      // Заголовок дня
       html += `<h3 class="blog-day-title">${t("День", "Day")} ${d.day}</h3>`;
       
-      // Собираем всё (утро, день, вечер) в один единый массив
+      // Собираем всё в один массив
       const allActivities = [];
       if (d.morning) allActivities.push(...d.morning);
       if (d.afternoon) allActivities.push(...d.afternoon);
       if (d.evening) allActivities.push(...d.evening);
 
-      // Выводим сплошным списком с точками
+      // Сплошной список с точками
       if (allActivities.length > 0) {
         html += `<ul class="blog-list">`;
         allActivities.forEach(item => {
-          html += `<li>${item}</li>`;
+          html += `<li>${formatAIText(item)}</li>`;
         });
         html += `</ul>`;
       }
     });
   }
 
-  // Добавляем советы без цветастых карточек
+  // Советы
   if (Array.isArray(data.tips) && data.tips.length > 0) {
     html += `<h3 class="blog-day-title">💡 ${t("Советы", "Tips")}</h3>`;
     html += `<ul class="blog-list">`;
-    data.tips.forEach(x => html += `<li>${x}</li>`);
+    data.tips.forEach(x => html += `<li>${formatAIText(x)}</li>`);
     html += `</ul>`;
   }
 
+  // Чек-лист
   if (Array.isArray(data.checklist) && data.checklist.length > 0) {
     html += `<h3 class="blog-day-title">✅ ${t("Чек-лист", "Checklist")}</h3>`;
     html += `<ul class="blog-list">`;
-    data.checklist.forEach(x => html += `<li>${x}</li>`);
+    data.checklist.forEach(x => html += `<li>${formatAIText(x)}</li>`);
     html += `</ul>`;
   }
 
@@ -192,10 +200,10 @@ async function generate() {
   try {
     const userNotes = document.getElementById("notes").value;
     
-    // СТРОГАЯ ИНСТРУКЦИЯ ДЛЯ ИИ: Делать жирным места и писать сплошным текстом
+    // === ЖЕСТКИЙ ПРИКАЗ ДЛЯ ИИ ===
     const systemInstruction = lang === 'ru' 
-      ? " (ИНСТРУКЦИЯ ДЛЯ ИИ: Не пиши слова Утро/День/Вечер! Просто перечисляй места. Каждый пункт ВСЕГДА начинай с названия локации, обернутого в тег <b>Название</b>, затем ставь точку и пиши 3-4 предложения с историей, описанием и ценой.)"
-      : " (AI INSTRUCTION: Do not write Morning/Afternoon/Evening! Start every item with the location name wrapped in <b>Name</b> tags, followed by a period and a detailed 3-4 sentence description with history and prices.)";
+      ? " (ИНСТРУКЦИЯ: Составь гид в стиле статьи! НЕ ИСПОЛЬЗУЙ слова Утро/День/Вечер. Каждый пункт начинай с названия места в двойных звездочках, например **Красная площадь**. После названия ставь точку и пиши 3-4 предложения с подробным описанием, интересными фактами и ценами. Текст должен быть связным и объемным.)"
+      : " (INSTRUCTION: Write an article-style guide! DO NOT use Morning/Afternoon/Evening labels. Start each item with the location name in double asterisks, like **Eiffel Tower**. Then write 3-4 detailed sentences with history and prices.)";
 
     const payload = {
       language: lang, destination: dest, days: days,

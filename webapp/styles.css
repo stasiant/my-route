@@ -374,3 +374,53 @@ select.input option {
   padding: 0;
   margin-top: 10px;
 }
+
+/* --- СТИЛЬ СПЛОШНОЙ СТАТЬИ --- */
+
+.blog-article {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Заголовок Дня (Без фоновой карточки) */
+.blog-day-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 30px 0 15px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Сплошной список активностей */
+.blog-list {
+  margin: 0;
+  padding-left: 20px; /* Отступ для точек списка */
+}
+
+.blog-list li {
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  padding-left: 4px;
+}
+
+/* Жирный шрифт для названий мест */
+.blog-list li b, 
+.blog-list li strong {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Убираем рамки и фоны из блока результатов, чтобы текст был сплошным на синем фоне */
+#screenResult .resultBlock {
+  border: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+#guideTitle {
+  display: none; /* Скрываем лишний заголовок "Ваш маршрут" */
+}
