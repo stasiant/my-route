@@ -6,13 +6,12 @@ const i18n = {
   ru: {
     subtitle: "Планировщик путешествий (Mini App)",
     welcomeTitle: "Привет! Я My Route",
-    welcomeText:
-      "Заполни форму — я соберу маршрут по дням, дам советы и чек‑лист.",
+    welcomeText: "Заполни форму — я соберу маршрут по дням, дам советы и чек‑лист.",
     features: [
-      "Маршрут по дням: утро / день / вечер",
+      "Маршрут в формате цельного текста (без карточек по дням)",
       "Советы и лайфхаки (транспорт, безопасность, как не переплачивать)",
       "Чек‑лист перед поездкой",
-      "Интерактивная карта (добавим дальше)"
+      "Точки для карты (в конце)"
     ],
     startBtn: "Создать маршрут",
     priceNote: "1 маршрут = 50⭐ (оплата Stars будет на следующем шаге).",
@@ -46,9 +45,8 @@ const i18n = {
 
     resultTitle: "Готово",
     newBtn: "Новый маршрут",
-    planTitle: "План по дням",
-    tipsTitle: "Советы",
-    checklistTitle: "Чек‑лист",
+    guideTitle: "Ваш маршрут",
+    pointsTitle: "Точки для карты",
     loading: "Генерирую маршрут…",
     errFill: "Заполни хотя бы 'Страна/город' и 'Дней'.",
     errApi: "Не получилось сгенерировать. Попробуй ещё раз."
@@ -56,13 +54,12 @@ const i18n = {
   en: {
     subtitle: "Travel Planner (Mini App)",
     welcomeTitle: "Hi! I'm My Route",
-    welcomeText:
-      "Fill the form — I’ll generate a day-by-day itinerary with tips and a checklist.",
+    welcomeText: "Fill the form — I’ll generate an itinerary as one readable guide.",
     features: [
-      "Day-by-day plan: morning / afternoon / evening",
+      "Itinerary as one continuous text (no day cards)",
       "Tips & hacks (transport, safety, avoid overpaying)",
       "Pre-trip checklist",
-      "Interactive map (next step)"
+      "Map points (at the end)"
     ],
     startBtn: "Create itinerary",
     priceNote: "1 itinerary = 50⭐ (Stars payment will be added next).",
@@ -96,9 +93,8 @@ const i18n = {
 
     resultTitle: "Done",
     newBtn: "New itinerary",
-    planTitle: "Day-by-day plan",
-    tipsTitle: "Tips",
-    checklistTitle: "Checklist",
+    guideTitle: "Your route",
+    pointsTitle: "Map points",
     loading: "Generating itinerary…",
     errFill: "Please fill at least Destination and Days.",
     errApi: "Could not generate. Please try again."
@@ -152,6 +148,89 @@ function renderInterests() {
     el.addEventListener("click", () => el.classList.toggle("active"));
     wrap.appendChild(el);
   });
+}
+
+function buildGuideText(data, lang) {
+  const t = (ru, en) => (lang === "ru" ? ru : en);
+  const lines = [];
+
+  if (data?.summary) {
+    lines.push(String(data.summary).trim());
+    lines.push("");
+  }
+
+  if (Array.isArray(data?.daily_plan) && data.daily_plan.length) {
+    lines.push(t("Маршрут:", "Itinerary:"));
+    data.daily_plan.forEach((d) => {
+      const dayTitle = d?.day ? t(`День ${d.day}`, `Day ${d.day}`) : t("День", "Day");
+      lines.push("");
+      lines.push(dayTitle + ":");
+
+      const addBlock = (labelRu, labelEn, arr) => {
+        if (Array.isArray(arr) && arr.length) {
+          lines.push(`${t(labelRu, labelEn)}: ${arr.join(", ")}.`);
+        }
+      };
+
+      addBlock("Утро", "Morning", d.morning);
+      addBlock("Днём", "Afternoon", d.afternoon);
+      addBlock("Вечер", "Evening", d.evening);
+    });
+    lines.push("");
+  }
+
+  if (Array.isArray(data?.food) && data.food.length) {
+    const foodList = data.food
+      .map((x) => (x?.name ? `${x.name}${x.type ? ` (${x.type})` : ""}` : null))
+      .filter(Boolean)
+      .join(", ");
+    if (foodList) {
+      lines.push(t("Еда/кофе:", "Food/coffee:"));
+      lines.push(foodList);
+      lines.push("");
+    }
+  }
+
+  if (data?.budget_notes) {
+    lines.push(t("Бюджет:", "Budget:"));
+    lines.push(String(data.budget_notes).trim());
+    lines.push("");
+  }
+
+  if (Array.isArray(data?.tips) && data.tips.length) {
+    lines.push(t("Советы и лайфхаки:", "Tips & hacks:"));
+    data.tips.forEach((x) => lines.push(`— ${x}`));
+    lines.push("");
+  }
+
+  if (Array.isArray(data?.checklist) && data.checklist.length) {
+    lines.push(t("Чек-лист:", "Checklist:"));
+    data.checklist.forEach((x) => lines.push(`— ${x}`));
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+function renderPointsList(pointsListEl, points, lang) {
+  pointsListEl.innerHTML = "";
+  const t = (ru, en) => (lang === "ru" ? ru : en);
+
+  const pts = Array.isArray(points) ? points : [];
+  if (!pts.length) {
+    const li = document.createElement("li");
+    li.textContent = t("Нет точек", "No points");
+    pointsListEl.appendChild(li);
+    return;
+  }
+
+  for (const p of pts) {
+    const li = document.createElement("li");
+    const name = p?.name || p?.query || t("Точка", "Point");
+    const day = p?.day ? t(` — День ${p.day}`, ` — Day ${p.day}`) : "";
+    li.textContent = `${name}${day}`;
+    pointsListEl.appendChild(li);
+  }
 }
 
 function render() {
@@ -208,9 +287,13 @@ function render() {
 
   document.getElementById("resultTitle").textContent = t.resultTitle;
   document.getElementById("newBtn").textContent = t.newBtn;
-  document.getElementById("planTitle").textContent = t.planTitle;
-  document.getElementById("tipsTitle").textContent = t.tipsTitle;
-  document.getElementById("checklistTitle").textContent = t.checklistTitle;
+
+  // Эти элементы будут существовать после правки index.html (screenResult)
+  const guideTitleEl = document.getElementById("guideTitle");
+  if (guideTitleEl) guideTitleEl.textContent = t.guideTitle;
+
+  const pointsTitleEl = document.getElementById("pointsTitle");
+  if (pointsTitleEl) pointsTitleEl.textContent = t.pointsTitle;
 
   renderInterests();
 
@@ -268,50 +351,13 @@ async function generate() {
 
     document.getElementById("resultSummary").textContent = data.summary || "";
 
-    const plan = document.getElementById("plan");
-    plan.innerHTML = "";
-    (data.daily_plan || []).forEach((d) => {
-      const card = document.createElement("div");
-      card.className = "dayCard";
+    // Новый вывод: один сплошной текст
+    const guideEl = document.getElementById("guide");
+    if (guideEl) guideEl.textContent = buildGuideText(data, lang);
 
-      const title = document.createElement("div");
-      title.className = "dayTitle";
-      title.textContent = `Day ${d.day ?? ""}`.trim();
-
-      const m = document.createElement("div");
-      m.className = "small";
-      m.textContent = `Morning: ${(d.morning || []).join(", ")}`;
-
-      const a = document.createElement("div");
-      a.className = "small";
-      a.textContent = `Afternoon: ${(d.afternoon || []).join(", ")}`;
-
-      const e = document.createElement("div");
-      e.className = "small";
-      e.textContent = `Evening: ${(d.evening || []).join(", ")}`;
-
-      card.appendChild(title);
-      card.appendChild(m);
-      card.appendChild(a);
-      card.appendChild(e);
-      plan.appendChild(card);
-    });
-
-    const tips = document.getElementById("tips");
-    tips.innerHTML = "";
-    (data.tips || []).forEach((x) => {
-      const li = document.createElement("li");
-      li.textContent = x;
-      tips.appendChild(li);
-    });
-
-    const checklist = document.getElementById("checklist");
-    checklist.innerHTML = "";
-    (data.checklist || []).forEach((x) => {
-      const li = document.createElement("li");
-      li.textContent = x;
-      checklist.appendChild(li);
-    });
+    // Точки в конце
+    const pointsListEl = document.getElementById("pointsList");
+    if (pointsListEl) renderPointsList(pointsListEl, data.map_points, lang);
 
     showScreen("result");
   } catch (e) {
