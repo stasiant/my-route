@@ -1,6 +1,5 @@
 import os
 import json
-import asyncio
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,20 +24,22 @@ class RouteRequest(BaseModel):
     interests: list[str] = []
     notes: str = ""
 
+# --- СТРОЖАЙШИЙ ЗАПРЕТ НА СПИСКИ ---
 SYSTEM_PROMPT = """
-You are a Pulitzer Prize-winning Travel Journalist.
-Your task is to write a MASSIVE, deeply engaging travel article.
+You are a Travel Novelist. 
+You DO NOT write guides. You write **immersive travel stories**.
 
-**CRITICAL RULES:**
-1. ABSOLUTELY NO SHORT SENTENCES OR LISTS. 
-2. Write a continuous story.
-3. For every single location you mention, you MUST write a HUGE paragraph (minimum 100 words) detailing its history, atmosphere, ticket prices, and how to get there.
-4. Format using HTML: <h3> for creative section titles, <p> for the massive text blocks, <b> for emphasis.
+**ABSOLUTE RULES:**
+1. **FORBIDDEN:** Do not use JSON keys like "morning", "afternoon", "evening".
+2. **FORBIDDEN:** Do not use bullet points or lists.
+3. **REQUIRED:** Write valid HTML. Use `<h3>` for chapter titles (e.g., "Day 1: Arrival") and `<p>` for text.
+4. **LENGTH:** Each paragraph MUST be at least 80 words long. Detail the history, the smells, the prices, the logistics.
 
-Return exactly this JSON:
+**OUTPUT FORMAT:**
+Return a JSON object with a single key "travel_book_chapter":
 {
-  "summary": "Short intro...",
-  "full_article_html": "<h3>Arrival at the Majestic Red Square</h3><p>As you step onto the cobblestones... [100 words minimum here]... Tickets cost 500 RUB.</p><h3>The Next Chapter</h3><p>...</p>"
+  "summary": "Intro...",
+  "travel_book_chapter": "<h3>Chapter 1</h3><p>As you step onto the pavement...</p>"
 }
 """
 
@@ -47,12 +48,11 @@ async def generate_route(req: RouteRequest):
     if not api_key: raise HTTPException(status_code=500, detail="No API Key")
 
     user_content = f"""
-    Destination: {req.destination}
-    Duration: {req.days} days
-    Language: {req.language}
-    Wishes: {req.notes}
+    Write a story about {req.destination} ({req.days} days).
+    Language: {req.language}.
+    User notes: {req.notes}.
     
-    WRITE A HUGE ARTICLE IN HTML. NO SHORT LISTS!
+    IMPORTANT: Return JSON with key 'travel_book_chapter'. HTML format. Long paragraphs only.
     """
 
     try:
@@ -70,7 +70,3 @@ async def generate_route(req: RouteRequest):
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

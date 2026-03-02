@@ -5,18 +5,13 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI
 
-# Инициализация
 api_key = os.getenv("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
 
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
 class RouteRequest(BaseModel):
@@ -29,38 +24,35 @@ class RouteRequest(BaseModel):
     interests: list[str] = []
     notes: str = ""
 
-# --- НОВАЯ СИСТЕМА: ТОЛЬКО HTML, НИКАКИХ СПИСКОВ ---
+# --- СТРОЖАЙШИЙ ЗАПРЕТ НА СПИСКИ ---
 SYSTEM_PROMPT = """
-You are a Travel Book Author. 
-Your goal is to write a continuous, immersive travel story (longread).
+You are a Travel Novelist. 
+You DO NOT write guides. You write **immersive travel stories**.
 
-**RULES:**
-1. **NO LISTS/BULLET POINTS.** Do not use markdown lists like "- ...".
-2. **FORMAT:** You must output valid HTML.
-   - Use `<h3>` for creative titles (e.g., "<h3>Day 1: The Red Heart of Moscow</h3>").
-   - Use `<p>` for long, descriptive paragraphs (minimum 60 words per paragraph).
-   - Use `<b>` for highlighting prices and key details inside the text.
-3. **CONTENT:** For every location, weave in history, prices, and opening hours into the narrative.
+**ABSOLUTE RULES:**
+1. **FORBIDDEN:** Do not use JSON keys like "morning", "afternoon", "evening".
+2. **FORBIDDEN:** Do not use bullet points or lists.
+3. **REQUIRED:** Write valid HTML. Use `<h3>` for chapter titles (e.g., "Day 1: Arrival") and `<p>` for text.
+4. **LENGTH:** Each paragraph MUST be at least 80 words long. Detail the history, the smells, the prices, the logistics.
 
-**JSON OUTPUT FORMAT:**
-Return a single JSON object:
+**OUTPUT FORMAT:**
+Return a JSON object with a single key "travel_book_chapter":
 {
-  "summary": "Short intro (1 sentence)",
-  "html_content": "<h3>Chapter 1...</h3><p>Long text...</p>..."
+  "summary": "Intro...",
+  "travel_book_chapter": "<h3>Chapter 1</h3><p>As you step onto the pavement...</p>"
 }
 """
 
 @app.post("/route/generate")
 async def generate_route(req: RouteRequest):
-    if not api_key:
-        raise HTTPException(status_code=500, detail="OpenAI API Key not set")
+    if not api_key: raise HTTPException(status_code=500, detail="No API Key")
 
     user_content = f"""
-    Write a Travel Story about {req.destination} for {req.days} days.
+    Write a story about {req.destination} ({req.days} days).
     Language: {req.language}.
-    Wishes: {req.notes}.
+    User notes: {req.notes}.
     
-    IMPORTANT: Output HTML. NO LISTS. Write paragraphs!
+    IMPORTANT: Return JSON with key 'travel_book_chapter'. HTML format. Long paragraphs only.
     """
 
     try:

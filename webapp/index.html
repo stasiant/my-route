@@ -12,60 +12,38 @@
       <header class="header">
         <div class="brand">
           <div class="logo">MR</div>
-          <div>
-            <div class="title">My Route</div>
-            <div class="subtitle" id="subtitle">Планировщик</div>
-          </div>
+          <div class="title">My Route</div>
         </div>
         <div class="lang">
-          <button class="chip active" id="btnRu" type="button">RU</button>
-          <button class="chip" id="btnEn" type="button">EN</button>
+          <button class="chip active" id="btnRu">RU</button>
+          <button class="chip" id="btnEn">EN</button>
         </div>
       </header>
 
       <section class="card" id="screenWelcome">
-        <h1 id="welcomeTitle">Привет! Я My Route</h1>
-        <p id="welcomeText" class="muted">Я составлю подробный гид по дням с историей и ценами.</p>
-        <button class="primary" id="startBtn" type="button">Создать маршрут</button>
+        <h1>Трэвел-блогер</h1>
+        <p class="muted">Я напишу подробную историю вашего путешествия.</p>
+        <button class="primary" id="startBtn">Создать</button>
       </section>
 
       <section class="card hidden" id="screenForm">
-        <div class="row">
-          <h2 id="formTitle" class="h2">Параметры</h2>
-          <button class="link" id="backBtn" type="button">← Назад</button>
-        </div>
-
-        <label class="field"><span class="label" id="lblDestination">Куда едем?</span><input id="destination" class="input" placeholder="Париж" /></label>
-        
+        <div class="row"><h2>Параметры</h2><button class="link" id="backBtn">Назад</button></div>
+        <label class="field"><span class="label">Куда?</span><input id="destination" class="input" placeholder="Рим" /></label>
         <div class="grid2">
-          <label class="field"><span class="label" id="lblDays">Дней</span><input id="days" class="input" type="number" placeholder="3" /></label>
-          <label class="field"><span class="label" id="lblNights">Ночей</span><input id="nights" class="input" type="number" placeholder="2" /></label>
+          <label class="field"><span class="label">Дней</span><input id="days" class="input" type="number" placeholder="3" /></label>
+          <label class="field"><span class="label">Бюджет</span><select id="budget" class="input"><option value="medium">Средний</option><option value="high">Высокий</option></select></label>
         </div>
-
-        <label class="field"><span class="label" id="lblBudget">Бюджет</span>
-          <select id="budget" class="input">
-            <option value="low" id="optBudgetLow">Эконом</option>
-            <option value="medium" id="optBudgetMed" selected>Средний</option>
-            <option value="high" id="optBudgetHigh">Комфорт</option>
-          </select>
-        </label>
-
-        <label class="field"><span class="label" id="lblNotes">Пожелания</span>
-          <textarea id="notes" class="input textarea" rows="3" placeholder="Что любите?"></textarea>
-        </label>
-
-        <button class="primary" id="generateBtn" type="button">Сгенерировать</button>
+        <label class="field"><span class="label">Пожелания</span><textarea id="notes" class="input" rows="3"></textarea></label>
+        <button class="primary" id="generateBtn">Сгенерировать</button>
       </section>
 
       <section class="card hidden" id="screenResult">
-        <div class="row">
-          <h2 class="h2" id="resultTitle">Готово</h2>
-          <button class="link" id="newBtn" type="button">Заново</button>
-        </div>
+        <div class="row"><h2 id="resultTitle">История</h2><button class="link" id="newBtn">Новый</button></div>
         <div class="resultBlock"><div class="muted" id="resultSummary"></div></div>
-        <div class="resultBlock"><div id="guide" class="guideText"></div></div>
+        <div class="resultBlock"><div id="guide"></div></div>
       </section>
     </main>
-    <script src="./app.js"></script>
+    <!-- ДОБАВИЛ ВЕРСИЮ v=3 ЧТОБЫ СБРОСИТЬ КЭШ -->
+    <script src="./app.js?v=3"></script>
   </body>
 </html>

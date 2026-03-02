@@ -1,19 +1,14 @@
 const tg = window.Telegram?.WebApp;
-// Указываем адрес API. Если ты запускаешь локально, поменяй на http://localhost:8000
 const API_BASE = "https://my-route-api.onrender.com";
 
 const i18n = {
   ru: {
-    subtitle: "Трэвел-блог", welcomeTitle: "Привет! Я My Route", welcomeText: "Я напишу для вас увлекательную историю путешествия.", startBtn: "Начать",
-    formTitle: "Детали", backBtn: "← Назад", lblDestination: "Куда?", lblDays: "Дней", lblNights: "Ночей", lblBudget: "Бюджет",
-    optBudgetLow: "Эконом", optBudgetMed: "Средний", optBudgetHigh: "Комфорт", lblNotes: "Пожелания",
-    generateBtn: "Написать историю", resultTitle: "Ваша история", newBtn: "Новый", loading: "Пишу книгу (30 сек)...", errFill: "Заполните поля."
+    generateBtn: "Написать историю", resultTitle: "Ваша история", loading: "Пишу книгу (30 сек)...", 
+    errFill: "Заполните поля.", errOldServer: "Сервер обновляется, подождите 2 минуты и попробуйте снова."
   },
   en: {
-    subtitle: "Travel Blog", welcomeTitle: "Hi! I'm My Route", welcomeText: "I will write a unique travel story for you.", startBtn: "Start",
-    formTitle: "Details", backBtn: "← Back", lblDestination: "Where?", lblDays: "Days", lblNights: "Nights", lblBudget: "Budget",
-    optBudgetLow: "Low", optBudgetMed: "Medium", optBudgetHigh: "Comfort", lblNotes: "Wishes",
-    generateBtn: "Write Story", resultTitle: "Your Story", newBtn: "New", loading: "Writing book...", errFill: "Fill fields."
+    generateBtn: "Write Story", resultTitle: "Your Story", loading: "Writing book...", 
+    errFill: "Fill fields.", errOldServer: "Server is updating, wait 2 mins and try again."
   }
 };
 
@@ -23,14 +18,14 @@ function render() {
   const t = i18n[currentLang];
   document.getElementById("btnRu").className = `chip ${currentLang === 'ru' ? 'active' : ''}`;
   document.getElementById("btnEn").className = `chip ${currentLang === 'en' ? 'active' : ''}`;
-  const ids = ["subtitle", "welcomeTitle", "welcomeText", "startBtn", "formTitle", "backBtn", "lblDestination", "lblDays", "lblNights", "lblBudget", "optBudgetLow", "optBudgetMed", "optBudgetHigh", "lblNotes", "generateBtn", "resultTitle", "newBtn"];
-  ids.forEach(id => { const el = document.getElementById(id); if (el && t[id]) el.textContent = t[id]; });
+  // Простая локализация кнопок
+  document.getElementById("generateBtn").textContent = t.generateBtn;
+  document.getElementById("resultTitle").textContent = t.resultTitle;
 }
 
 function showScreen(id) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-  window.scrollTo(0, 0);
 }
 
 async function generate() {
@@ -43,12 +38,13 @@ async function generate() {
   
   try {
     const notes = document.getElementById("notes").value;
-    const hackPrompt = " (IMPORTANT: Write output as HTML. No lists. Use <h3> for titles and <p> for long text.)";
+    // Взлом промпта на случай, если сервер тупит
+    const hack = " (SYSTEM: OUTPUT ONLY HTML in 'travel_book_chapter'. NO LISTS. USE <p> TAGS FOR LONG TEXT.)";
 
     const payload = {
       language: currentLang, destination: dest, days: days,
       budget: document.getElementById("budget").value, pace: "normal", companions: "couple", interests: [],
-      notes: notes + hackPrompt
+      notes: notes + hack
     };
     
     const res = await fetch(`${API_BASE}/route/generate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -56,23 +52,20 @@ async function generate() {
     
     document.getElementById("resultSummary").textContent = data.summary || "";
     
-    // Вставляем HTML
-    let content = "";
-    if (data.html_content) {
-        content = data.html_content;
-    } else if (data.daily_plan) {
-        // Fallback для старого формата
-        data.daily_plan.forEach(d => {
-             const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-             items.forEach(it => content += `<p><b>${it}</b></p>`);
-        });
+    // === ПРОВЕРКА ОБНОВЛЕНИЯ ===
+    if (data.travel_book_chapter) {
+        // УРА! ЭТО НОВЫЙ ФОРМАТ
+        document.getElementById("guide").innerHTML = `<div class="story-content">${data.travel_book_chapter}</div>`;
+        showScreen("screenResult");
+    } else {
+        // ПРИШЕЛ СТАРЫЙ ФОРМАТ -> СЕРВЕР НЕ ОБНОВИЛСЯ
+        console.log("Old format received:", data);
+        alert(i18n[currentLang].errOldServer);
     }
-    
-    document.getElementById("guide").innerHTML = `<div class="story-content">${content}</div>`;
-    showScreen("screenResult");
+
   } catch (e) {
     console.error(e);
-    alert("Ошибка. Попробуйте еще раз.");
+    alert("Ошибка соединения.");
   } finally {
     btn.disabled = false; btn.textContent = i18n[currentLang].generateBtn;
   }
