@@ -25,29 +25,22 @@ function show(id) {
   }
 }
 
-// ПРЕВРАЩАЕМ HTML В КРАСИВЫЙ ТЕКСТ ДЛЯ ЧАТА
+// Эта функция готовит текст для Телеграма (делает жирным заголовки)
 function formatForTelegram(html) {
   let text = html;
-  
   // Заголовки разделов -> Жирный + отступы
   text = text.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
-  
   // Заголовки дней -> Жирный со смайликом
   text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n");
-  
   // Логистика (курсив) -> оставляем тег <i>
   text = text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>");
-  
   // Жирный текст -> оставляем тег <b>
   text = text.replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
-  
   // Обычные абзацы -> просто перенос строки
   text = text.replace(/<p>/gi, "").replace(/<\/p>/gi, "\n");
-  
-  // Убираем лишние теги, если остались
+  // Убираем теги br
   text = text.replace(/<br>/gi, "\n");
   
-  // Чистим двойные пробелы и переносы
   return text.trim();
 }
 
@@ -76,16 +69,16 @@ async function generate() {
     
     const data = await res.json();
     
-    // Получаем HTML от ИИ
+    // Получаем контент
     let html = data.html_content || "";
     if (!html && data.daily_plan) {
-        // Если вдруг старый формат
         data.daily_plan.forEach(d => html += `<p>${d.day}</p>`);
     }
 
+    // Сохраняем результат в переменную
     currentRouteHTML = html;
     
-    // Показываем на экране телефона
+    // Показываем на экране
     document.getElementById("summary").textContent = data.summary || `Маршрут: ${dest}`;
     document.getElementById("bookBody").innerHTML = html;
     
@@ -99,11 +92,14 @@ async function generate() {
   }
 }
 
-// ОТПРАВЛЯЕМ НАСТОЯЩИЙ МАРШРУТ
+// ВОТ ЗДЕСЬ МЫ ОТПРАВЛЯЕМ РЕАЛЬНЫЙ МАРШРУТ
 tg.onEvent('mainButtonClicked', function(){
     if (!currentRouteHTML) return;
+    
+    // Форматируем HTML в текст для сообщения
     const msg = formatForTelegram(currentRouteHTML);
-    // Отправляем данные (Telegram сам закроет приложение)
+    
+    // Отправляем!
     tg.sendData(msg); 
 });
 
