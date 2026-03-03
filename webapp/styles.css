@@ -199,3 +199,20 @@ textarea.ios-input {
   color: #000;
   font-weight: 600;
 }
+
+/* СТИЛЬ ДЛЯ ЛОГИСТИКИ (Как добраться) */
+.article-content i {
+  display: block;
+  color: #8E8E93; /* Apple Gray */
+  font-size: 15px;
+  margin-top: -10px; /* Прижимаем к предыдущему блоку */
+  margin-bottom: 20px;
+  padding-left: 10px;
+  border-left: 2px solid #007AFF; /* Синяя полоска слева */
+}
+
+/* Названия мест делаем крупнее */
+.article-content b {
+  font-size: 17px;
+  color: #000;
+}
