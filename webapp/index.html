@@ -5,22 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>My Route</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=FINAL_BTN" />
+    <link rel="stylesheet" href="./styles.css?v=PREMIUM_WELCOME" />
   </head>
   <body>
+    <!-- НОВЫЙ ЭКРАН ПРИВЕТСТВИЯ НА ВЕСЬ ЭКРАН С ФОНОМ -->
+    <section id="screenWelcome" class="welcome-screen">
+      <div class="welcome-overlay"></div>
+      <div class="welcome-content">
+        <header class="welcome-header">
+            <div class="welcome-logo">My Route</div>
+            <button id="langToggle" class="welcome-lang">RU</button>
+        </header>
+        <div class="welcome-text-block">
+            <h1 class="welcome-title">Путешествия.<br>Переосмысление.</h1>
+            <p class="welcome-subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
+            <button id="btnStart" class="welcome-btn">Начать</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ (ФОРМА И РЕЗУЛЬТАТ) -->
     <main class="container">
       
-      <!-- WELCOME -->
-      <section id="screenWelcome">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-weight:bold;">My Route</div>
-            <button id="langToggle" class="ios-link">RU</button>
-        </div>
-        <h1 class="large-title">Путешествия.<br>Переосмысление.</h1>
-        <p class="subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
-        <button id="btnStart" class="ios-btn">Начать</button>
-      </section>
-
       <!-- FORM -->
       <section id="screenForm" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -85,103 +91,12 @@
             <div id="bookBody" class="article-content"></div>
         </div>
 
-        <!-- ВОТ ОНА: НАША ЖЕЛЕЗОБЕТОННАЯ КНОПКА, КОТОРАЯ НИКУДА НЕ ИСЧЕЗНЕТ -->
         <button id="htmlSaveBtn" style="margin-top: 20px; margin-bottom: 40px; background-color: #007AFF; color: white; padding: 16px; border-radius: 14px; width: 100%; font-size: 17px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3);">
             📥 Сохранить в чат
         </button>
       </section>
-
     </main>
 
-    <script>
-    let tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
-
-    const API_BASE = "https://my-route-api.onrender.com";
-    const i18n = {
-      ru: { loading: "Строится...", btnGen: "Создать историю", err: "Ошибка генерации" },
-      en: { loading: "Building...", btnGen: "Write Guide", err: "Generation error" }
-    };
-    let lang = "ru";
-    let currentRouteHTML = "";
-
-    function show(id) {
-        ["screenWelcome", "screenForm", "screenResult"].forEach(s => {
-            document.getElementById(s).classList.add("hidden");
-        });
-        document.getElementById(id).classList.remove("hidden");
-        window.scrollTo(0,0);
-    }
-
-    function formatForTelegram(html) {
-      let text = html.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
-      text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n").replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
-      return text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>").replace(/<p>/gi, "").replace(/<\/p>/gi, "\n").replace(/<br>/gi, "\n").trim();
-    }
-
-    async function generate() {
-      const btn = document.getElementById("btnGen");
-      const dest = document.getElementById("destination").value;
-      const days = document.getElementById("days").value;
-      if(!dest || !days) return alert("Заполните город и дни");
-      
-      btn.disabled = true; btn.textContent = i18n[lang].loading;
-      
-      try {
-        const res = await fetch(`${API_BASE}/route/generate`, {
-          method: "POST", headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            language: lang, destination: dest, days: parseInt(days),
-            budget: document.getElementById("budget").value, pace: "normal", 
-            companions: document.getElementById("companions").value, interests: [],
-            notes: document.getElementById("notes").value
-          })
-        });
-        const data = await res.json();
-        let html = data.html_content || "";
-        if (!html && data.daily_plan) {
-            data.daily_plan.forEach(d => {
-                html += `<h3>День ${d.day}</h3>`;
-                const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-                items.forEach(it => html += `<p>${it}</p>`);
-            });
-        }
-        
-        currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n\n` + html;
-        
-        document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
-        document.getElementById("bookBody").innerHTML = html;
-        
-        show("screenResult");
-      } catch(e) {
-        alert(i18n[lang].err);
-      } finally {
-        btn.disabled = false; btn.textContent = i18n[lang].btnGen;
-      }
-    }
-
-    window.onload = function() {
-        document.getElementById("btnStart").onclick = () => show("screenForm");
-        document.getElementById("backBtn").onclick = () => show("screenWelcome");
-        document.getElementById("newBtn").onclick = () => show("screenForm");
-        document.getElementById("btnGen").onclick = generate;
-        
-        document.getElementById("langToggle").onclick = (e) => {
-            lang = lang === "ru" ? "en" : "ru"; 
-            e.target.textContent = lang.toUpperCase();
-        };
-        
-        // ОБРАБОТЧИК НАШЕЙ НОВОЙ ВСТРОЕННОЙ КНОПКИ
-        document.getElementById("htmlSaveBtn").onclick = function() {
-            if (!currentRouteHTML) return;
-            if (tg) {
-                // Отправляем данные боту
-                tg.sendData(formatForTelegram(currentRouteHTML));
-            } else {
-                alert("Это приложение должно быть открыто внутри Telegram!");
-            }
-        };
-    };
-    </script>
+    <script src="app_final.js?v=999"></script>
   </body>
 </html>

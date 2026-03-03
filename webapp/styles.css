@@ -4,7 +4,6 @@
   --text-main: #000000;
   --text-sec: #8E8E93;     /* Apple Gray */
   --blue: #007AFF;         /* Apple Blue */
-  --separator: #C6C6C8;
   --radius: 12px;
 }
 
@@ -30,27 +29,116 @@ body {
 
 .hidden { display: none !important; }
 
-/* --- TYPOGRAPHY --- */
-.large-title {
-  font-size: 34px;
+/* ========================================= */
+/* НОВЫЙ ЭКРАН ПРИВЕТСТВИЯ (ПОЛНОЭКРАННЫЙ)   */
+/* ========================================= */
+
+.welcome-screen {
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh;
+  /* Фоновая картинка дороги на закате */
+  background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1000&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center bottom;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  /* Градиент затемнения, чтобы текст легко читался */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.6) 100%);
+  z-index: 1;
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 24px 50px 24px;
+}
+
+.welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.welcome-logo {
+  color: #fff;
   font-weight: 700;
-  letter-spacing: -0.5px;
-  margin: 20px 0 10px 0;
-  color: #000;
+  font-size: 18px;
+  letter-spacing: 0.5px;
 }
-.subtitle {
-  font-size: 17px;
-  color: var(--text-sec);
-  margin-bottom: 30px;
+
+.welcome-lang {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
 }
+
+.welcome-text-block {
+  margin-top: auto; /* Прижимает блок с текстом и кнопкой вниз */
+  margin-bottom: 20px;
+}
+
+.welcome-title {
+  color: #ffffff;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+.welcome-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 18px;
+  line-height: 1.4;
+  margin: 0 0 32px 0;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  font-weight: 400;
+}
+
+.welcome-btn {
+  background-color: #007AFF;
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+.welcome-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* ========================================= */
+/* ОСТАЛЬНОЕ ПРИЛОЖЕНИЕ (ФОРМА / РЕЗУЛЬТАТ)  */
+/* ========================================= */
+
 .section-header {
   font-size: 13px;
   text-transform: uppercase;
   color: var(--text-sec);
-  margin: 0 0 8px 16px; /* Отступ как в настройках iOS */
+  margin: 0 0 8px 16px;
 }
 
-/* --- IOS FORM GROUPS --- */
 .ios-group {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -67,152 +155,38 @@ body {
 }
 .ios-row:last-child { border-bottom: none; }
 
-.ios-label {
-  width: 110px;
-  font-size: 17px;
-  color: #000;
-}
+.ios-label { width: 110px; font-size: 17px; color: #000; }
 
 .ios-input {
-  flex: 1;
-  border: none;
-  font-size: 17px;
-  color: var(--blue); /* Цвет ввода синий */
-  outline: none;
-  text-align: right; /* Ввод справа, как в iOS */
-  background: transparent;
-  font-family: inherit;
+  flex: 1; border: none; font-size: 17px; color: var(--blue);
+  outline: none; text-align: right; background: transparent; font-family: inherit;
 }
 .ios-input::placeholder { color: var(--text-sec); }
 
-textarea.ios-input {
-  text-align: left;
-  min-height: 80px;
-  padding-top: 4px;
-  resize: none;
-}
+textarea.ios-input { text-align: left; min-height: 80px; padding-top: 4px; resize: none; }
 
-/* --- BUTTONS --- */
+.ios-select {
+  appearance: none; -webkit-appearance: none; background-color: transparent;
+  direction: rtl; padding-right: 0; color: var(--blue); cursor: pointer;
+}
+.ios-select:focus { outline: none; }
+
 .ios-btn {
-  width: 100%;
-  background-color: var(--blue);
-  color: #fff;
-  font-size: 17px;
-  font-weight: 600;
-  padding: 16px;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  margin-top: 10px;
+  width: 100%; background-color: var(--blue); color: #fff; font-size: 17px; font-weight: 600;
+  padding: 16px; border-radius: 14px; border: none; cursor: pointer; margin-top: 10px;
 }
 .ios-btn:active { opacity: 0.7; transform: scale(0.99); }
 
-.ios-link {
-  background: none;
-  border: none;
-  color: var(--blue);
-  font-size: 17px;
-  cursor: pointer;
-}
+.ios-link { background: none; border: none; color: var(--blue); font-size: 17px; cursor: pointer; }
 
 /* --- BOOK VIEW (RESULT) --- */
 .book-view {
-  background: #fff;
-  padding: 30px 24px;
-  border-radius: var(--radius);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  margin-top: 10px;
+  background: #fff; padding: 30px 24px; border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 10px;
 }
+.book-intro { font-size: 19px; font-weight: 600; line-height: 1.4; margin-bottom: 30px; color: #333; font-style: italic; }
 
-.book-intro {
-  font-size: 19px;
-  font-weight: 600;
-  line-height: 1.4;
-  margin-bottom: 30px;
-  color: #333;
-  font-style: italic;
-}
-
-/* Стили для контента от ИИ */
-.article-content h3 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-top: 40px;
-  margin-bottom: 12px;
-  color: #000;
-}
-.article-content p {
-  font-size: 18px; /* Крупный читабельный текст */
-  line-height: 1.6;
-  color: #1d1d1f;
-  margin-bottom: 24px;
-  font-family: 'Georgia', serif; /* Шрифт как в книгах */
-}
-.article-content b {
-  font-weight: 600;
-  color: #000;
-}
-
-/* СТИЛИ ДЛЯ ВЫПАДАЮЩИХ СПИСКОВ */
-.ios-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-color: transparent;
-  direction: rtl; /* Чтобы текст прижимался вправо, как в iOS */
-  padding-right: 0;
-  color: var(--blue);
-  cursor: pointer;
-}
-
-/* Убираем синюю обводку при клике */
-.ios-select:focus {
-  outline: none;
-}
-
-/* Стили для структурированного текста от ИИ */
-.article-content h2 {
-  font-size: 24px;
-  font-weight: 800;
-  margin-top: 45px;
-  margin-bottom: 20px;
-  color: #000;
-  border-bottom: 2px solid #007AFF; /* Красивая синяя линия под главным заголовком */
-  padding-bottom: 8px;
-  display: inline-block;
-}
-
-.article-content h3 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-top: 35px;
-  margin-bottom: 12px;
-  color: #007AFF; /* Заголовки дней синим цветом (Apple Style) */
-}
-
-.article-content p {
-  font-size: 16px;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.article-content b {
-  color: #000;
-  font-weight: 600;
-}
-
-/* СТИЛЬ ДЛЯ ЛОГИСТИКИ (Как добраться) */
-.article-content i {
-  display: block;
-  color: #8E8E93; /* Apple Gray */
-  font-size: 15px;
-  margin-top: -10px; /* Прижимаем к предыдущему блоку */
-  margin-bottom: 20px;
-  padding-left: 10px;
-  border-left: 2px solid #007AFF; /* Синяя полоска слева */
-}
-
-/* Названия мест делаем крупнее */
-.article-content b {
-  font-size: 17px;
-  color: #000;
-}
+.article-content h2 { font-size: 24px; font-weight: 800; margin-top: 45px; margin-bottom: 20px; color: #000; border-bottom: 2px solid #007AFF; padding-bottom: 8px; display: inline-block; }
+.article-content h3 { font-size: 20px; font-weight: 700; margin-top: 35px; margin-bottom: 12px; color: #007AFF; }
+.article-content p { font-size: 16px; line-height: 1.6; margin-bottom: 16px; }
+.article-content b { color: #000; font-weight: 600; }
