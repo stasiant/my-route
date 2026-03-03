@@ -17,7 +17,7 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    # ВОТ ОНА - ТВОЯ ПРАВИЛЬНАЯ ССЫЛКА
+    # Твоя ссылка на фронтенд
     web_app_url = "https://my-route-webapp.onrender.com" 
     
     markup = ReplyKeyboardMarkup(
@@ -25,9 +25,22 @@ async def cmd_start(message: Message):
         resize_keyboard=True
     )
     
+    # Красивое приветственное сообщение
+    welcome_text = (
+        "Привет! 🌍 Я твой персональный ИИ-редактор путешествий.\n\n"
+        "Я создам для тебя идеальную историю поездки, учитывая твой бюджет, темп и компанию.\n\n"
+        "<b>Что я умею:</b>\n"
+        "🗺 Писать подробные маршруты по дням\n"
+        "🏛 Рассказывать историю и атмосферу мест\n"
+        "💰 Подсказывать цены на билеты и еду\n"
+        "🚇 Строить удобную логистику (как добраться)\n\n"
+        "Жми на серую кнопку внизу экрана 👇"
+    )
+    
     await message.answer(
-        "Всё готово! Жми на кнопку внизу 👇",
-        reply_markup=markup
+        welcome_text,
+        reply_markup=markup,
+        parse_mode=ParseMode.HTML
     )
 
 @dp.message(F.web_app_data)
@@ -46,7 +59,7 @@ async def handle_web_app_data(message: Message):
         await message.answer(route_text)
 
 async def main():
-    print("Бот запущен с правильной ссылкой! Переходи в Телеграм.")
+    print("Бот с красивым приветствием запущен!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
