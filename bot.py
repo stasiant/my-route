@@ -13,15 +13,15 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    # ПАРАМЕТР ?v=11 СБРОСИТ КЭШ ТЕЛЕГРАМА
-    web_app_url = "https://my-route-api.onrender.com/webapp/app.html?v=11" 
+    # Указываем правильный файл: index.html
+    web_app_url = "https://my-route-api.onrender.com/webapp/index.html?v=FINAL_V3" 
     
     markup = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]],
         resize_keyboard=True
     )
     
-    await message.answer("Всё готово! Нажми кнопку 👇", reply_markup=markup)
+    await message.answer("Версия V3 готова! Нажми кнопку 👇", reply_markup=markup)
 
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
@@ -36,7 +36,7 @@ async def handle_web_app_data(message: Message):
         await message.answer(route_text)
 
 async def main():
-    print("Бот готов!")
+    print("Бот запущен, версия V3!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
