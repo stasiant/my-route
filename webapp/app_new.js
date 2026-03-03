@@ -1,10 +1,4 @@
-let tg = null;
-try {
-    if (window.Telegram && window.Telegram.WebApp) {
-        tg = window.Telegram.WebApp;
-    }
-} catch (e) {}
-
+let tg = window.Telegram?.WebApp;
 const API_BASE = "https://my-route-api.onrender.com";
 
 const i18n = {
@@ -21,21 +15,23 @@ let lang = "ru";
 let currentRouteHTML = "";
 
 function show(id) {
-    try {
-        ["screenWelcome", "screenForm", "screenResult"].forEach(s => {
-            document.getElementById(s).classList.add("hidden");
-        });
-        document.getElementById(id).classList.remove("hidden");
-        
-        if (tg && tg.MainButton) {
-            if (id === "screenResult") {
-                tg.MainButton.setText(i18n[lang].saveBtn).show();
-            } else {
-                tg.MainButton.hide();
-            }
+    ["screenWelcome", "screenForm", "screenResult"].forEach(s => {
+        document.getElementById(s).classList.add("hidden");
+    });
+    document.getElementById(id).classList.remove("hidden");
+    
+    // ВОТ ОНО: Жестко заставляем Телеграм показать кнопку и задаем цвет
+    if (tg) {
+        if (id === "screenResult") {
+            tg.MainButton.setParams({
+                text: i18n[lang].saveBtn,
+                color: "#007AFF",
+                is_visible: true
+            });
+            tg.MainButton.show();
+        } else {
+            tg.MainButton.hide();
         }
-    } catch (e) {
-        alert("Ошибка в show: " + e.message);
     }
 }
 
@@ -79,6 +75,8 @@ async function generate() {
     
     document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
     document.getElementById("bookBody").innerHTML = html;
+    
+    // Вызываем функцию показа экрана, которая включает кнопку
     show("screenResult");
 
   } catch(e) {
@@ -90,29 +88,25 @@ async function generate() {
 
 // ЖДЕМ ПОЛНОЙ ЗАГРУЗКИ СТРАНИЦЫ
 window.onload = function() {
-    try {
-        document.getElementById("btnStart").onclick = () => show("screenForm");
-        document.getElementById("backBtn").onclick = () => show("screenWelcome");
-        document.getElementById("newBtn").onclick = () => show("screenForm");
-        document.getElementById("btnGen").onclick = generate;
-        document.getElementById("langToggle").onclick = (e) => {
-            lang = lang === "ru" ? "en" : "ru";
-            e.target.textContent = lang.toUpperCase();
-        };
+    document.getElementById("btnStart").onclick = () => show("screenForm");
+    document.getElementById("backBtn").onclick = () => show("screenWelcome");
+    document.getElementById("newBtn").onclick = () => show("screenForm");
+    document.getElementById("btnGen").onclick = generate;
+    document.getElementById("langToggle").onclick = (e) => {
+        lang = lang === "ru" ? "en" : "ru";
+        e.target.textContent = lang.toUpperCase();
+    };
 
-        if(tg) { 
-            tg.onEvent('mainButtonClicked', function(){
-                if (!currentRouteHTML) {
-                    tg.sendData("Ошибка: пустой маршрут"); 
-                    return;
-                }
-                const msg = formatForTelegram(currentRouteHTML);
-                tg.sendData(msg); 
-            });
-            tg.ready(); 
-            tg.expand();
-        }
-    } catch(e) {
-        alert("Критическая ошибка старта: " + e.message);
+    if(tg) { 
+        tg.ready(); 
+        tg.expand();
+        // Первичная настройка кнопки
+        tg.MainButton.setParams({ text: i18n[lang].saveBtn, color: "#007AFF" });
+        
+        tg.onEvent('mainButtonClicked', function(){
+            if (!currentRouteHTML) return;
+            const msg = formatForTelegram(currentRouteHTML);
+            tg.sendData(msg); 
+        });
     }
 };

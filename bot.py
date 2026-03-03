@@ -13,15 +13,15 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    # ПАРАМЕТР ?v=10 СБРОСИТ КЭШ ТЕЛЕГРАМА 100%
-    web_app_url = "https://my-route-api.onrender.com/webapp/app.html?v=10" 
+    # ПАРАМЕТР ?v=11 СБРОСИТ КЭШ ТЕЛЕГРАМА
+    web_app_url = "https://my-route-api.onrender.com/webapp/app.html?v=11" 
     
     markup = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]],
         resize_keyboard=True
     )
     
-    await message.answer("Бронебойный тест! Нажми кнопку 👇", reply_markup=markup)
+    await message.answer("Всё готово! Нажми кнопку 👇", reply_markup=markup)
 
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
