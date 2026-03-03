@@ -7,39 +7,36 @@ from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 
 logging.basicConfig(level=logging.INFO)
-
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    # Ссылка на твой фронтенд
-    web_app_url = "https://my-route-api.onrender.com/webapp/index.html" 
+    # ПАРАМЕТР ?v=10 СБРОСИТ КЭШ ТЕЛЕГРАМА 100%
+    web_app_url = "https://my-route-api.onrender.com/webapp/app.html?v=10" 
     
     markup = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]],
         resize_keyboard=True
     )
-    await message.answer("Нажми кнопку внизу 👇", reply_markup=markup)
+    
+    await message.answer("Бронебойный тест! Нажми кнопку 👇", reply_markup=markup)
 
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
-    data = message.web_app_data.data
+    route_text = message.web_app_data.data
     
+    if not route_text:
+        return
+
     try:
-        # Разбиваем на части, если маршрут очень длинный
-        if len(data) > 4000:
-            for x in range(0, len(data), 4000):
-                await message.answer(data[x:x+4000], parse_mode=ParseMode.HTML)
-        else:
-            await message.answer(data, parse_mode=ParseMode.HTML)
+        await message.answer(route_text, parse_mode=ParseMode.HTML)
     except Exception as e:
-        # Если HTML невалидный, шлем как текст
-        await message.answer(data)
+        await message.answer(route_text)
 
 async def main():
-    print("Бот готов к работе!")
+    print("Бот готов!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 

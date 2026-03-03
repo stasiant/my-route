@@ -1,4 +1,10 @@
-const tg = window.Telegram?.WebApp;
+let tg = null;
+try {
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg = window.Telegram.WebApp;
+    }
+} catch (e) {}
+
 const API_BASE = "https://my-route-api.onrender.com";
 
 const i18n = {
@@ -15,14 +21,22 @@ let lang = "ru";
 let currentRouteHTML = "";
 
 function show(id) {
-  ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-  
-  if (tg && id === "screenResult") {
-      tg.MainButton.setText(i18n[lang].saveBtn).show();
-  } else if (tg) {
-      tg.MainButton.hide();
-  }
+    try {
+        ["screenWelcome", "screenForm", "screenResult"].forEach(s => {
+            document.getElementById(s).classList.add("hidden");
+        });
+        document.getElementById(id).classList.remove("hidden");
+        
+        if (tg && tg.MainButton) {
+            if (id === "screenResult") {
+                tg.MainButton.setText(i18n[lang].saveBtn).show();
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+    } catch (e) {
+        alert("Ошибка в show: " + e.message);
+    }
 }
 
 function formatForTelegram(html) {
@@ -61,7 +75,6 @@ async function generate() {
     
     const data = await res.json();
     let html = data.html_content || "";
-    
     currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
     
     document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
@@ -69,35 +82,37 @@ async function generate() {
     show("screenResult");
 
   } catch(e) {
-    console.error(e);
-    alert(i18n[lang].err);
+    alert("Ошибка генерации: " + e.message);
   } finally {
     btn.disabled = false; btn.textContent = i18n[lang].btnGen;
   }
 }
 
-// СНАЧАЛА НАЗНАЧАЕМ КНОПКИ (чтобы работали везде)
-document.getElementById("btnStart").onclick = () => show("screenForm");
-document.getElementById("backBtn").onclick = () => show("screenWelcome");
-document.getElementById("newBtn").onclick = () => show("screenForm");
-document.getElementById("btnGen").onclick = generate;
-document.getElementById("langToggle").onclick = (e) => {
-    lang = lang === "ru" ? "en" : "ru";
-    e.target.textContent = lang.toUpperCase();
-};
+// ЖДЕМ ПОЛНОЙ ЗАГРУЗКИ СТРАНИЦЫ
+window.onload = function() {
+    try {
+        document.getElementById("btnStart").onclick = () => show("screenForm");
+        document.getElementById("backBtn").onclick = () => show("screenWelcome");
+        document.getElementById("newBtn").onclick = () => show("screenForm");
+        document.getElementById("btnGen").onclick = generate;
+        document.getElementById("langToggle").onclick = (e) => {
+            lang = lang === "ru" ? "en" : "ru";
+            e.target.textContent = lang.toUpperCase();
+        };
 
-// ПОТОМ БЕЗОПАСНО ДОБАВЛЯЕМ ФУНКЦИИ ТЕЛЕГРАМА (только если они есть)
-if(tg) { 
-    tg.onEvent('mainButtonClicked', function(){
-        if (!currentRouteHTML) {
-            tg.sendData("Ошибка: пустой маршрут"); 
-            return;
+        if(tg) { 
+            tg.onEvent('mainButtonClicked', function(){
+                if (!currentRouteHTML) {
+                    tg.sendData("Ошибка: пустой маршрут"); 
+                    return;
+                }
+                const msg = formatForTelegram(currentRouteHTML);
+                tg.sendData(msg); 
+            });
+            tg.ready(); 
+            tg.expand();
         }
-        const msg = formatForTelegram(currentRouteHTML);
-        tg.sendData(msg); 
-    });
-
-    tg.ready(); 
-    tg.expand();
-    tg.MainButton.setParams({ text: i18n[lang].saveBtn, color: "#007AFF" });
-}
+    } catch(e) {
+        alert("Критическая ошибка старта: " + e.message);
+    }
+};
