@@ -3,22 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>My Route</title>
+    <title>My Route - App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
   </head>
   <body>
     <main class="container">
+      <!-- WELCOME -->
       <section id="screenWelcome">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">My Route</div>
             <button id="langToggle" class="ios-link">RU</button>
         </div>
         <h1 class="large-title">Путешествия.<br>Переосмысление.</h1>
-        <p class="subtitle">Ваш персональный редактор путешествий.</p>
+        <p class="subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
         <button id="btnStart" class="ios-btn">Начать</button>
       </section>
 
+      <!-- FORM -->
       <section id="screenForm" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <button id="backBtn" class="ios-link">Отмена</button>
@@ -33,10 +35,20 @@
         <div class="section-header">УСЛОВИЯ</div>
         <div class="ios-group">
             <div class="ios-row"><span class="ios-label">Бюджет</span>
-                <select id="budget" class="ios-input ios-select"><option value="economy">Эконом</option><option value="medium" selected>Средний</option><option value="high">Высокий</option><option value="premium">Премиум</option></select>
+                <select id="budget" class="ios-input ios-select">
+                    <option value="economy">Эконом</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="high">Высокий</option>
+                    <option value="premium">Премиум</option>
+                </select>
             </div>
             <div class="ios-row"><span class="ios-label">Кто едет</span>
-                <select id="companions" class="ios-input ios-select"><option value="solo">Один</option><option value="couple" selected>Пара</option><option value="family">Семья</option><option value="group">Компания</option></select>
+                <select id="companions" class="ios-input ios-select">
+                    <option value="solo">Один</option>
+                    <option value="couple" selected>Пара</option>
+                    <option value="family">Семья</option>
+                    <option value="group">Компания</option>
+                </select>
             </div>
         </div>
         <div class="section-header">ДЕТАЛИ</div>
@@ -46,6 +58,7 @@
         <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
+      <!-- RESULT -->
       <section id="screenResult" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
@@ -76,7 +89,6 @@
         });
         document.getElementById(id).classList.remove("hidden");
         
-        // Правильное включение кнопки через официальные методы
         if (tg && tg.MainButton) {
             if (id === "screenResult") {
                 tg.MainButton.setText(i18n[lang].saveBtn);
@@ -113,7 +125,10 @@
         });
         const data = await res.json();
         let html = data.html_content || "";
-        currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
+        
+        // ВОТ ЗДЕСЬ ФОРМИРУЕТСЯ РЕАЛЬНЫЙ ТЕКСТ
+        currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n\n` + html;
+        
         document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
         document.getElementById("bookBody").innerHTML = html;
         show("screenResult");
@@ -132,9 +147,11 @@
         document.getElementById("langToggle").onclick = (e) => {
             lang = lang === "ru" ? "en" : "ru"; e.target.textContent = lang.toUpperCase();
         };
+        
         if (tg) {
             tg.onEvent('mainButtonClicked', function() {
                 if (!currentRouteHTML) return;
+                // ОТПРАВЛЯЕМ РЕАЛЬНЫЙ МАРШРУТ
                 tg.sendData(formatForTelegram(currentRouteHTML)); 
             });
         }
