@@ -1,27 +1,17 @@
 const tg = window.Telegram?.WebApp;
 const API_BASE = "https://my-route-api.onrender.com";
 
-const i18n = {
-  ru: {
-    btnMain: "Создать маршрут", btnGen: "Написать гид", loading: "Собираю маршрут...",
-    err: "Ошибка. Попробуйте еще раз.", saveBtn: "📥 Сохранить в чат"
-  },
-  en: {
-    btnMain: "Create Route", btnGen: "Write Guide", loading: "Building route...",
-    err: "Error. Try again.", saveBtn: "📥 Save to Chat"
-  }
-};
 let lang = "ru";
-
-// Переменная для хранения готового текста
 let currentRouteHTML = "";
+
+const i18n = {
+  ru: { btnGen: "Создать маршрут", loading: "Маршрут строится...", saveBtn: "📥 Сохранить в чат" }
+};
 
 function show(id) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-  window.scrollTo(0,0);
   
-  // Показываем MainButton только на экране результата
   if (id === "screenResult") {
       tg.MainButton.setText(i18n[lang].saveBtn).show();
   } else {
@@ -29,27 +19,12 @@ function show(id) {
   }
 }
 
-// Превращаем HTML сайта в текст для Telegram сообщения
+// Упрощенная функция: просто чистит теги
 function formatForTelegram(html) {
-  let text = html;
-  
-  // Заголовки H2 (Разделы) -> Жирный текст + отступы
-  text = text.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
-  
-  // Заголовки H3 (Дни) -> Жирный текст
-  text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n");
-  
-  // Абзацы P -> Просто переносы строк
-  text = text.replace(/<p>/gi, "").replace(/<\/p>/gi, "\n");
-  
-  // Логистика (курсив) -> оставляем как есть, Telegram понимает <i>
-  // Жирный <b> -> оставляем как есть
-  
-  // Убираем лишние пробелы и двойные переносы
-  text = text.replace(/<br>/gi, "\n");
-  text = text.replace(/\n\s*\n/g, "\n\n");
-  
-  return text.trim();
+    // Убираем вообще все теги для надежности теста
+    let temp = document.createElement("div");
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
 }
 
 async function generate() {
@@ -57,90 +32,45 @@ async function generate() {
   const dest = document.getElementById("destination").value;
   const days = document.getElementById("days").value;
   
-  if(!dest || !days) return alert("Заполните город и дни");
-  
   btn.disabled = true; btn.textContent = i18n[lang].loading;
-  tg.MainButton.hide(); // Скрываем кнопку пока грузится
-
+  
   try {
-    const userNotes = document.getElementById("notes").value;
-    const budget = document.getElementById("budget").value;
-    const companions = document.getElementById("companions").value;
-
-    const contextPrompt = `
-    Бюджет: ${budget}. Компания: ${companions}.
-    User wishes: ${userNotes}`;
-
     const res = await fetch(`${API_BASE}/route/generate`, {
       method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         language: lang, destination: dest, days: parseInt(days),
-        budget: budget, pace: "normal", companions: companions, interests: [],
-        notes: contextPrompt
+        budget: "medium", pace: "normal", companions: "couple", notes: "Test"
       })
     });
     
     const data = await res.json();
-    let html = "";
-    let summary = data.summary || `Маршрут по ${dest}`;
-
-    // СБОРКА HTML
-    if (data.html_content) {
-        html = data.html_content;
-    } else if (data.daily_plan) {
-       // Fallback для старого формата
-       html += `<h2>Маршрут</h2>`;
-       data.daily_plan.forEach(d => {
-         html += `<h3>День ${d.day}</h3>`;
-         const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-         items.forEach(it => html += `<p>${it}</p>`);
-       });
-    }
-
-    // Сохраняем для отправки
-    currentRouteHTML = `<b>${summary}</b>\n${html}`;
+    let html = data.html_content || "<h2>Маршрут готов</h2><p>Тестовый маршрут.</p>";
     
-    // Вывод на экран
-    document.getElementById("summary").textContent = summary;
+    currentRouteHTML = html; // Сохраняем оригинал
     document.getElementById("bookBody").innerHTML = html;
-    
     show("screenResult");
 
   } catch(e) {
-    console.error(e);
-    alert(i18n[lang].err);
+    alert("Ошибка");
   } finally {
     btn.disabled = false; btn.textContent = i18n[lang].btnGen;
   }
 }
 
-// ОБРАБОТЧИК НАЖАТИЯ НА СИНЮЮ КНОПКУ TELEGRAM
+// ГЛАВНОЕ: КНОПКА ОТПРАВКИ
 tg.onEvent('mainButtonClicked', function(){
-    if (!currentRouteHTML) return;
-    
-    // Подготовка текста
-    const telegramMessage = formatForTelegram(currentRouteHTML);
-    
-    // Отправка данных боту. Бот получит это как "web_app_data"
-    tg.sendData(telegramMessage); 
+    // ТЕСТ: Отправляем короткое сообщение, чтобы проверить связь
+    // Если это сработает, значит бот жив, а проблема была в длине текста
+    tg.sendData("ТЕСТОВАЯ ОТПРАВКА: Маршрут успешно создан!"); 
 });
 
 document.getElementById("btnStart").onclick = () => show("screenForm");
 document.getElementById("backBtn").onclick = () => show("screenWelcome");
 document.getElementById("newBtn").onclick = () => show("screenForm");
 document.getElementById("btnGen").onclick = generate;
-document.getElementById("langToggle").onclick = (e) => {
-    lang = lang === "ru" ? "en" : "ru";
-    e.target.textContent = lang.toUpperCase();
-};
 
 if(tg) { 
     tg.ready(); 
-    tg.expand(); 
-    // Настраиваем цвета кнопки под тему
-    tg.MainButton.setParams({
-        text: i18n[lang].saveBtn,
-        color: "#007AFF", // Apple Blue
-        text_color: "#FFFFFF"
-    });
+    tg.expand();
+    tg.MainButton.setParams({ text: "Сохранить", color: "#007AFF" });
 }
