@@ -18,9 +18,9 @@ function show(id) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
   
-  if (id === "screenResult") {
+  if (tg && id === "screenResult") {
       tg.MainButton.setText(i18n[lang].saveBtn).show();
-  } else {
+  } else if (tg) {
       tg.MainButton.hide();
   }
 }
@@ -62,7 +62,6 @@ async function generate() {
     const data = await res.json();
     let html = data.html_content || "";
     
-    // Сохраняем реальный маршрут
     currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
     
     document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
@@ -77,16 +76,7 @@ async function generate() {
   }
 }
 
-tg.onEvent('mainButtonClicked', function(){
-    if (!currentRouteHTML) {
-        tg.sendData("Ошибка: пустой маршрут"); 
-        return;
-    }
-    // Отправляем реальный текст!
-    const msg = formatForTelegram(currentRouteHTML);
-    tg.sendData(msg); 
-});
-
+// СНАЧАЛА НАЗНАЧАЕМ КНОПКИ (чтобы работали везде)
 document.getElementById("btnStart").onclick = () => show("screenForm");
 document.getElementById("backBtn").onclick = () => show("screenWelcome");
 document.getElementById("newBtn").onclick = () => show("screenForm");
@@ -96,7 +86,17 @@ document.getElementById("langToggle").onclick = (e) => {
     e.target.textContent = lang.toUpperCase();
 };
 
+// ПОТОМ БЕЗОПАСНО ДОБАВЛЯЕМ ФУНКЦИИ ТЕЛЕГРАМА (только если они есть)
 if(tg) { 
+    tg.onEvent('mainButtonClicked', function(){
+        if (!currentRouteHTML) {
+            tg.sendData("Ошибка: пустой маршрут"); 
+            return;
+        }
+        const msg = formatForTelegram(currentRouteHTML);
+        tg.sendData(msg); 
+    });
+
     tg.ready(); 
     tg.expand();
     tg.MainButton.setParams({ text: i18n[lang].saveBtn, color: "#007AFF" });
