@@ -12,7 +12,6 @@ const i18n = {
   }
 };
 let lang = "ru";
-// Сюда мы будем сохранять готовый текст маршрута
 let currentRouteHTML = "";
 
 function show(id) {
@@ -26,25 +25,14 @@ function show(id) {
   }
 }
 
-// Функция очистки HTML для Телеграма
 function formatForTelegram(html) {
   let text = html;
-  
-  // Делаем заголовки красивыми
   text = text.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
   text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n");
-  
-  // Оставляем жирный шрифт и курсив
   text = text.replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
   text = text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>");
-  text = text.replace(/<strong>(.*?)<\/strong>/gi, "<b>$1</b>");
-  text = text.replace(/<em>(.*?)<\/em>/gi, "<i>$1</i>");
-  
-  // Убираем параграфы
   text = text.replace(/<p>/gi, "").replace(/<\/p>/gi, "\n");
   text = text.replace(/<br>/gi, "\n");
-  
-  // Убираем лишние пробелы
   return text.trim();
 }
 
@@ -72,20 +60,15 @@ async function generate() {
     });
     
     const data = await res.json();
-    
-    // Получаем контент
     let html = data.html_content || "";
     if (!html && data.daily_plan) {
          data.daily_plan.forEach(d => html += `<p>${d.day}</p>`);
     }
 
-    // ВАЖНО: Сохраняем результат в переменную
     currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
     
-    // Показываем на экране
     document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
     document.getElementById("bookBody").innerHTML = html;
-    
     show("screenResult");
 
   } catch(e) {
@@ -96,17 +79,12 @@ async function generate() {
   }
 }
 
-// --- ВОТ ЗДЕСЬ БЫЛА ОШИБКА, ИСПРАВЛЯЕМ ---
 tg.onEvent('mainButtonClicked', function(){
     if (!currentRouteHTML) {
-        tg.sendData("Ошибка: Маршрут пуст");
+        tg.sendData("Ошибка: пустой маршрут"); 
         return;
     }
-    
-    // Превращаем HTML в текст для чата
     const msg = formatForTelegram(currentRouteHTML);
-    
-    // ОТПРАВЛЯЕМ РЕАЛЬНЫЕ ДАННЫЕ
     tg.sendData(msg); 
 });
 
