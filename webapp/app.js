@@ -12,6 +12,7 @@ const i18n = {
   }
 };
 let lang = "ru";
+// Сюда мы будем сохранять готовый текст маршрута
 let currentRouteHTML = "";
 
 function show(id) {
@@ -25,22 +26,25 @@ function show(id) {
   }
 }
 
-// Эта функция готовит текст для Телеграма (делает жирным заголовки)
+// Функция очистки HTML для Телеграма
 function formatForTelegram(html) {
   let text = html;
-  // Заголовки разделов -> Жирный + отступы
+  
+  // Делаем заголовки красивыми
   text = text.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
-  // Заголовки дней -> Жирный со смайликом
   text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n");
-  // Логистика (курсив) -> оставляем тег <i>
-  text = text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>");
-  // Жирный текст -> оставляем тег <b>
+  
+  // Оставляем жирный шрифт и курсив
   text = text.replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
-  // Обычные абзацы -> просто перенос строки
+  text = text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>");
+  text = text.replace(/<strong>(.*?)<\/strong>/gi, "<b>$1</b>");
+  text = text.replace(/<em>(.*?)<\/em>/gi, "<i>$1</i>");
+  
+  // Убираем параграфы
   text = text.replace(/<p>/gi, "").replace(/<\/p>/gi, "\n");
-  // Убираем теги br
   text = text.replace(/<br>/gi, "\n");
   
+  // Убираем лишние пробелы
   return text.trim();
 }
 
@@ -72,14 +76,14 @@ async function generate() {
     // Получаем контент
     let html = data.html_content || "";
     if (!html && data.daily_plan) {
-        data.daily_plan.forEach(d => html += `<p>${d.day}</p>`);
+         data.daily_plan.forEach(d => html += `<p>${d.day}</p>`);
     }
 
-    // Сохраняем результат в переменную
-    currentRouteHTML = html;
+    // ВАЖНО: Сохраняем результат в переменную
+    currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
     
     // Показываем на экране
-    document.getElementById("summary").textContent = data.summary || `Маршрут: ${dest}`;
+    document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
     document.getElementById("bookBody").innerHTML = html;
     
     show("screenResult");
@@ -92,14 +96,17 @@ async function generate() {
   }
 }
 
-// ВОТ ЗДЕСЬ МЫ ОТПРАВЛЯЕМ РЕАЛЬНЫЙ МАРШРУТ
+// --- ВОТ ЗДЕСЬ БЫЛА ОШИБКА, ИСПРАВЛЯЕМ ---
 tg.onEvent('mainButtonClicked', function(){
-    if (!currentRouteHTML) return;
+    if (!currentRouteHTML) {
+        tg.sendData("Ошибка: Маршрут пуст");
+        return;
+    }
     
-    // Форматируем HTML в текст для сообщения
+    // Превращаем HTML в текст для чата
     const msg = formatForTelegram(currentRouteHTML);
     
-    // Отправляем!
+    // ОТПРАВЛЯЕМ РЕАЛЬНЫЕ ДАННЫЕ
     tg.sendData(msg); 
 });
 
