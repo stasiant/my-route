@@ -2,60 +2,49 @@ import asyncio
 import os
 import logging
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, WebAppInfo
+from aiogram.types import Message, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import CommandStart
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.enums import ParseMode
 
-# Включаем логирование, чтобы видеть ошибки
 logging.basicConfig(level=logging.INFO)
 
-# Получаем токен из переменных окружения
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
-# Если токена нет, скрипт упадет с понятной ошибкой
 if not TOKEN:
-    raise ValueError("Нет токена! Укажи переменную окружения TELEGRAM_BOT_TOKEN")
+    raise ValueError("Нет токена!")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Хэндлер на команду /start
+# --- КНОПКА ОТКРЫТИЯ ПРИЛОЖЕНИЯ ---
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    builder = InlineKeyboardBuilder()
-    # ВАЖНО: Замени URL на адрес твоего приложения на Render
-    web_app_url = "https://my-route-api.onrender.com" 
+    # ВАЖНО: Добавляем путь к фронтенду! (Убедись, что index.html доступен по этому адресу)
+    # Если твой фронтенд хостится на GitHub Pages, сюда нужно вставить ссылку на GitHub Pages.
+    # Но пока попробуем так, если сервер раздает статику:
+    web_app_url = "https://my-route-api.onrender.com/webapp/index.html" 
     
-    builder.button(text="🚀 Создать маршрут", web_app=WebAppInfo(url=web_app_url))
+    markup = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]
+        ],
+        resize_keyboard=True
+    )
     
     await message.answer(
-        "Привет! Я помогу спланировать путешествие.\nНажми кнопку ниже, чтобы начать.",
-        reply_markup=builder.as_markup()
+        "Привет! Нажми кнопку внизу экрана, чтобы создать маршрут 👇",
+        reply_markup=markup
     )
 
-# --- ГЛАВНОЕ: Хэндлер, который ловит данные из Web App ---
+# --- ЛОВИМ ДАННЫЕ ИЗ ПРИЛОЖЕНИЯ ---
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
-    # Получаем данные (наш текст маршрута)
     data = message.web_app_data.data
     
-    try:
-        # Телеграм не дает отправлять сообщения длиннее 4096 символов.
-        # Если маршрут длинный, разбиваем его на части.
-        if len(data) > 4096:
-            for x in range(0, len(data), 4096):
-                await message.answer(data[x:x+4096], parse_mode=ParseMode.HTML)
-        else:
-            await message.answer(data, parse_mode=ParseMode.HTML)
-            
-    except Exception as e:
-        # Если HTML кривой, отправляем как простой текст
-        print(f"Ошибка отправки HTML: {e}")
-        await message.answer(data)
+    # Отправляем тестовое сообщение
+    await message.answer(f"✅ Данные получены!\n\n{data}")
 
 async def main():
     print("Бот запущен...")
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
