@@ -4,93 +4,141 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>My Route</title>
-    <script src="https://telegram.org/js/telegram-web-app_v3.js?v=2026-03-03-final-no-test"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="container">
-      
-      <!-- WELCOME -->
       <section id="screenWelcome">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">My Route</div>
             <button id="langToggle" class="ios-link">RU</button>
         </div>
-        
         <h1 class="large-title">Путешествия.<br>Переосмысление.</h1>
-        <p class="subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
-        
+        <p class="subtitle">Ваш персональный редактор путешествий.</p>
         <button id="btnStart" class="ios-btn">Начать</button>
       </section>
 
-      <!-- FORM -->
       <section id="screenForm" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <button id="backBtn" class="ios-link">Отмена</button>
             <div style="font-weight:600;">Параметры</div>
             <div style="width:50px;"></div>
         </div>
-
         <div class="section-header">МАРШРУТ</div>
         <div class="ios-group">
-            <div class="ios-row">
-                <span class="ios-label">Куда</span>
-                <input id="destination" class="ios-input" placeholder="Париж" />
-            </div>
-            <div class="ios-row">
-                <span class="ios-label">Дней</span>
-                <input id="days" type="number" class="ios-input" placeholder="3" />
-            </div>
+            <div class="ios-row"><span class="ios-label">Куда</span><input id="destination" class="ios-input" placeholder="Париж" /></div>
+            <div class="ios-row"><span class="ios-label">Дней</span><input id="days" type="number" class="ios-input" placeholder="3" /></div>
         </div>
-
         <div class="section-header">УСЛОВИЯ</div>
         <div class="ios-group">
-            <!-- БЮДЖЕТ -->
-            <div class="ios-row">
-                <span class="ios-label">Бюджет</span>
-                <select id="budget" class="ios-input ios-select">
-                    <option value="economy">Эконом</option>
-                    <option value="medium" selected>Средний</option>
-                    <option value="high">Высокий</option>
-                    <option value="premium">Премиум</option>
-                </select>
+            <div class="ios-row"><span class="ios-label">Бюджет</span>
+                <select id="budget" class="ios-input ios-select"><option value="economy">Эконом</option><option value="medium" selected>Средний</option><option value="high">Высокий</option><option value="premium">Премиум</option></select>
             </div>
-            <!-- КОМПАНИЯ -->
-            <div class="ios-row">
-                <span class="ios-label">Кто едет</span>
-                <select id="companions" class="ios-input ios-select">
-                    <option value="solo">Один</option>
-                    <option value="couple" selected>Пара</option>
-                    <option value="family">Семья (3-4)</option>
-                    <option value="group">Компания</option>
-                </select>
+            <div class="ios-row"><span class="ios-label">Кто едет</span>
+                <select id="companions" class="ios-input ios-select"><option value="solo">Один</option><option value="couple" selected>Пара</option><option value="family">Семья</option><option value="group">Компания</option></select>
             </div>
         </div>
-
         <div class="section-header">ДЕТАЛИ</div>
         <div class="ios-group">
-            <div class="ios-row">
-                <textarea id="notes" class="ios-input" style="text-align:left;" placeholder="Напишите подробно: люблю музеи, азиатскую кухню, не люблю долгие переходы..."></textarea>
-            </div>
+            <div class="ios-row"><textarea id="notes" class="ios-input" placeholder="Напишите подробно..."></textarea></div>
         </div>
-
         <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
-      <!-- RESULT -->
       <section id="screenResult" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
             <button id="newBtn" class="ios-link">Готово</button>
         </div>
-
         <div class="book-view">
             <div id="summary" class="book-intro"></div>
             <div id="bookBody" class="article-content"></div>
         </div>
       </section>
-
     </main>
-    <script src="./app_v3.js?v=2026-03-03-final-no-test"></script>
+
+    <script>
+    let tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    const API_BASE = "https://my-route-api.onrender.com";
+    const i18n = {
+      ru: { loading: "Строится...", saveBtn: "📥 Сохранить в чат", btnGen: "Создать историю" },
+      en: { loading: "Building...", saveBtn: "📥 Save to Chat", btnGen: "Write Guide" }
+    };
+    let lang = "ru";
+    let currentRouteHTML = "";
+
+    function show(id) {
+        ["screenWelcome", "screenForm", "screenResult"].forEach(s => {
+            document.getElementById(s).classList.add("hidden");
+        });
+        document.getElementById(id).classList.remove("hidden");
+        
+        // Правильное включение кнопки через официальные методы
+        if (tg && tg.MainButton) {
+            if (id === "screenResult") {
+                tg.MainButton.setText(i18n[lang].saveBtn);
+                tg.MainButton.setParams({color: "#007AFF", text_color: "#ffffff"});
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+    }
+
+    function formatForTelegram(html) {
+      let text = html.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
+      text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n").replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
+      return text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>").replace(/<p>/gi, "").replace(/<\/p>/gi, "\n").replace(/<br>/gi, "\n").trim();
+    }
+
+    async function generate() {
+      const btn = document.getElementById("btnGen");
+      const dest = document.getElementById("destination").value;
+      const days = document.getElementById("days").value;
+      if(!dest || !days) return alert("Заполните город и дни");
+      
+      btn.disabled = true; btn.textContent = i18n[lang].loading;
+      try {
+        const res = await fetch(`${API_BASE}/route/generate`, {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            language: lang, destination: dest, days: parseInt(days),
+            budget: document.getElementById("budget").value, pace: "normal", 
+            companions: document.getElementById("companions").value, interests: [],
+            notes: document.getElementById("notes").value
+          })
+        });
+        const data = await res.json();
+        let html = data.html_content || "";
+        currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
+        document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
+        document.getElementById("bookBody").innerHTML = html;
+        show("screenResult");
+      } catch(e) {
+        alert("Ошибка: " + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = i18n[lang].btnGen;
+      }
+    }
+
+    window.onload = function() {
+        document.getElementById("btnStart").onclick = () => show("screenForm");
+        document.getElementById("backBtn").onclick = () => show("screenWelcome");
+        document.getElementById("newBtn").onclick = () => show("screenForm");
+        document.getElementById("btnGen").onclick = generate;
+        document.getElementById("langToggle").onclick = (e) => {
+            lang = lang === "ru" ? "en" : "ru"; e.target.textContent = lang.toUpperCase();
+        };
+        if (tg) {
+            tg.onEvent('mainButtonClicked', function() {
+                if (!currentRouteHTML) return;
+                tg.sendData(formatForTelegram(currentRouteHTML)); 
+            });
+        }
+    };
+    </script>
   </body>
 </html>
