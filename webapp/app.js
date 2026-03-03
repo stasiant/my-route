@@ -4,33 +4,52 @@ const API_BASE = "https://my-route-api.onrender.com";
 const i18n = {
   ru: {
     btnMain: "Создать маршрут", btnGen: "Написать гид", loading: "Собираю маршрут...",
-    err: "Ошибка. Попробуйте еще раз."
+    err: "Ошибка. Попробуйте еще раз.", saveBtn: "📥 Сохранить в чат"
   },
   en: {
     btnMain: "Create Route", btnGen: "Write Guide", loading: "Building route...",
-    err: "Error. Try again."
+    err: "Error. Try again.", saveBtn: "📥 Save to Chat"
   }
 };
 let lang = "ru";
+
+// Переменная для хранения готового текста
+let currentRouteHTML = "";
 
 function show(id) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
   window.scrollTo(0,0);
+  
+  // Показываем MainButton только на экране результата
+  if (id === "screenResult") {
+      tg.MainButton.setText(i18n[lang].saveBtn).show();
+  } else {
+      tg.MainButton.hide();
+  }
 }
 
-// Выделяем жирным первое предложение (название места)
-function highlightPlace(text) {
-  let clean = text.replace(/^(Утро|День|Вечер|Morning|Afternoon|Evening)[:.-]?\s*/i, '');
-  if (clean.includes('**')) {
-    return clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  } else {
-    const parts = clean.split('. ');
-    if (parts.length > 1 && parts[0].length < 150) {
-      return `<b>${parts[0]}.</b> ${parts.slice(1).join('. ')}`;
-    }
-  }
-  return clean;
+// Превращаем HTML сайта в текст для Telegram сообщения
+function formatForTelegram(html) {
+  let text = html;
+  
+  // Заголовки H2 (Разделы) -> Жирный текст + отступы
+  text = text.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
+  
+  // Заголовки H3 (Дни) -> Жирный текст
+  text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n");
+  
+  // Абзацы P -> Просто переносы строк
+  text = text.replace(/<p>/gi, "").replace(/<\/p>/gi, "\n");
+  
+  // Логистика (курсив) -> оставляем как есть, Telegram понимает <i>
+  // Жирный <b> -> оставляем как есть
+  
+  // Убираем лишние пробелы и двойные переносы
+  text = text.replace(/<br>/gi, "\n");
+  text = text.replace(/\n\s*\n/g, "\n\n");
+  
+  return text.trim();
 }
 
 async function generate() {
@@ -41,6 +60,7 @@ async function generate() {
   if(!dest || !days) return alert("Заполните город и дни");
   
   btn.disabled = true; btn.textContent = i18n[lang].loading;
+  tg.MainButton.hide(); // Скрываем кнопку пока грузится
 
   try {
     const userNotes = document.getElementById("notes").value;
@@ -48,11 +68,8 @@ async function generate() {
     const companions = document.getElementById("companions").value;
 
     const contextPrompt = `
-    [КРИТИЧЕСКИ ВАЖНО: ПИШИ ПОДРОБНО!]
     Бюджет: ${budget}. Компания: ${companions}.
-    Для каждого места в daily_plan пиши ОГРОМНЫЙ абзац (что посмотреть, цены, как добраться). 
-    В конце обязательно заполни поле "tips" подробными советами по транспорту и жилью.
-    Пожелания пользователя: ${userNotes}`;
+    User wishes: ${userNotes}`;
 
     const res = await fetch(`${API_BASE}/route/generate`, {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -65,45 +82,28 @@ async function generate() {
     
     const data = await res.json();
     let html = "";
-    
-    // 1. Вступление
-    if(data.summary) {
-        document.getElementById("summary").textContent = data.summary;
-    } else {
-        document.getElementById("summary").textContent = `Маршрут по ${dest} на ${days} дней.`;
-    }
+    let summary = data.summary || `Маршрут по ${dest}`;
 
-    // 2. Основной маршрут
+    // СБОРКА HTML
     if (data.html_content) {
-        // Если сервер всё-таки обновился
         html = data.html_content;
     } else if (data.daily_plan) {
-       // Если работает старый сервер
-       html += `<h2>Маршрут по дням</h2>`;
-       
+       // Fallback для старого формата
+       html += `<h2>Маршрут</h2>`;
        data.daily_plan.forEach(d => {
          html += `<h3>День ${d.day}</h3>`;
          const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-         if(items.length) {
-             items.forEach(it => {
-                 html += `<p>${highlightPlace(it)}</p>`;
-             });
-         }
+         items.forEach(it => html += `<p>${it}</p>`);
        });
-
-       // 3. Полезные советы (берем из старого JSON)
-       if(data.tips && data.tips.length > 0) {
-           html += `<h2>Полезные советы для поездки</h2>`;
-           data.tips.forEach(tip => {
-               html += `<p>${highlightPlace(tip)}</p>`;
-           });
-       }
-       if(data.budget_notes) {
-           html += `<p><b>Бюджет:</b> ${data.budget_notes}</p>`;
-       }
     }
 
+    // Сохраняем для отправки
+    currentRouteHTML = `<b>${summary}</b>\n${html}`;
+    
+    // Вывод на экран
+    document.getElementById("summary").textContent = summary;
     document.getElementById("bookBody").innerHTML = html;
+    
     show("screenResult");
 
   } catch(e) {
@@ -114,6 +114,17 @@ async function generate() {
   }
 }
 
+// ОБРАБОТЧИК НАЖАТИЯ НА СИНЮЮ КНОПКУ TELEGRAM
+tg.onEvent('mainButtonClicked', function(){
+    if (!currentRouteHTML) return;
+    
+    // Подготовка текста
+    const telegramMessage = formatForTelegram(currentRouteHTML);
+    
+    // Отправка данных боту. Бот получит это как "web_app_data"
+    tg.sendData(telegramMessage); 
+});
+
 document.getElementById("btnStart").onclick = () => show("screenForm");
 document.getElementById("backBtn").onclick = () => show("screenWelcome");
 document.getElementById("newBtn").onclick = () => show("screenForm");
@@ -123,4 +134,13 @@ document.getElementById("langToggle").onclick = (e) => {
     e.target.textContent = lang.toUpperCase();
 };
 
-if(tg) { tg.ready(); tg.expand(); }
+if(tg) { 
+    tg.ready(); 
+    tg.expand(); 
+    // Настраиваем цвета кнопки под тему
+    tg.MainButton.setParams({
+        text: i18n[lang].saveBtn,
+        color: "#007AFF", // Apple Blue
+        text_color: "#FFFFFF"
+    });
+}
