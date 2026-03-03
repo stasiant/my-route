@@ -15,10 +15,10 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- РИСУЕМ ПРАВИЛЬНУЮ СЕРУЮ КНОПКУ ---
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
-    web_app_url = "https://my-route-api.onrender.com/webapp/index.html" 
+    # ВОТ ОНА - ТВОЯ ПРАВИЛЬНАЯ ССЫЛКА
+    web_app_url = "https://my-route-webapp.onrender.com" 
     
     markup = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]],
@@ -26,31 +26,27 @@ async def cmd_start(message: Message):
     )
     
     await message.answer(
-        "Привет! Нажми СЕРУЮ кнопку внизу экрана 👇\n\n(Не нажимай синюю кнопку Menu слева, она не умеет сохранять маршруты!)",
+        "Всё готово! Жми на кнопку внизу 👇",
         reply_markup=markup
     )
 
-# --- ЛОВИМ МАРШРУТ И ОТПРАВЛЯЕМ В ЧАТ ---
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
-    data = message.web_app_data.data
-    
-    print(f"\n[УСПЕХ] Получен маршрут! Длина: {len(data)} символов.")
+    route_text = message.web_app_data.data
     
     try:
-        # Если маршрут огромный (лонгрид от ИИ), режем его на куски, иначе Телеграм выдаст ошибку
-        if len(data) > 4000:
-            for x in range(0, len(data), 4000):
-                await message.answer(data[x:x+4000], parse_mode=ParseMode.HTML)
+        # Режем лонгрид на куски, чтобы Телеграм не ругался на длину
+        if len(route_text) > 4000:
+            for x in range(0, len(route_text), 4000):
+                await message.answer(route_text[x:x+4000], parse_mode=ParseMode.HTML)
         else:
-            await message.answer(data, parse_mode=ParseMode.HTML)
+            await message.answer(route_text, parse_mode=ParseMode.HTML)
     except Exception as e:
-        print(f"[ОШИБКА HTML] {e}")
-        # Если ИИ прислал кривой тег, отправляем как простой текст
-        await message.answer(data)
+        print(f"Ошибка HTML: {e}")
+        await message.answer(route_text)
 
 async def main():
-    print("Бот запущен. Переходи в Телеграм и жми /start")
+    print("Бот запущен с правильной ссылкой! Переходи в Телеграм.")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
