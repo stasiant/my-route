@@ -5,6 +5,10 @@ const i18n = {
   ru: {
     btnMain: "Создать маршрут", btnGen: "Написать гид", loading: "Маршрут строится...",
     err: "Ошибка. Попробуйте еще раз.", saveBtn: "📥 Сохранить в чат"
+  },
+  en: {
+    btnMain: "Create Route", btnGen: "Write Guide", loading: "Building route...",
+    err: "Error. Try again.", saveBtn: "📥 Save to Chat"
   }
 };
 let lang = "ru";
@@ -13,11 +17,11 @@ let currentRouteHTML = "";
 function show(id) {
   ["screenWelcome", "screenForm", "screenResult"].forEach(s => document.getElementById(s).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-
+  
   if (id === "screenResult") {
-    tg.MainButton.setText(i18n[lang].saveBtn).show();
+      tg.MainButton.setText(i18n[lang].saveBtn).show();
   } else {
-    tg.MainButton.hide();
+      tg.MainButton.hide();
   }
 }
 
@@ -36,37 +40,31 @@ async function generate() {
   const btn = document.getElementById("btnGen");
   const dest = document.getElementById("destination").value;
   const days = document.getElementById("days").value;
-
-  if (!dest || !days) return alert("Заполните город и дни");
-
-  btn.disabled = true;
-  btn.textContent = i18n[lang].loading;
-
+  
+  if(!dest || !days) return alert("Заполните город и дни");
+  
+  btn.disabled = true; btn.textContent = i18n[lang].loading;
+  
   try {
     const userNotes = document.getElementById("notes").value;
     const budget = document.getElementById("budget").value;
     const companions = document.getElementById("companions").value;
 
     const res = await fetch(`${API_BASE}/route/generate`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
+      method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        language: lang,
-        destination: dest,
-        days: parseInt(days),
-        budget: budget,
-        pace: "normal",
-        companions: companions,
-        interests: [],
+        language: lang, destination: dest, days: parseInt(days),
+        budget: budget, pace: "normal", companions: companions, interests: [],
         notes: userNotes
       })
     });
-
+    
     const data = await res.json();
     let html = data.html_content || "";
-
+    
+    // Сохраняем реальный маршрут
     currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n` + html;
-
+    
     document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
     document.getElementById("bookBody").innerHTML = html;
     show("screenResult");
@@ -75,27 +73,31 @@ async function generate() {
     console.error(e);
     alert(i18n[lang].err);
   } finally {
-    btn.disabled = false;
-    btn.textContent = i18n[lang].btnGen;
+    btn.disabled = false; btn.textContent = i18n[lang].btnGen;
   }
 }
 
 tg.onEvent('mainButtonClicked', function(){
-  if (!currentRouteHTML) {
-    tg.sendData("Ошибка: маршрут не сгенерирован");
-    return;
-  }
-  const msg = formatForTelegram(currentRouteHTML);
-  tg.sendData(msg);
+    if (!currentRouteHTML) {
+        tg.sendData("Ошибка: пустой маршрут"); 
+        return;
+    }
+    // Отправляем реальный текст!
+    const msg = formatForTelegram(currentRouteHTML);
+    tg.sendData(msg); 
 });
 
 document.getElementById("btnStart").onclick = () => show("screenForm");
 document.getElementById("backBtn").onclick = () => show("screenWelcome");
 document.getElementById("newBtn").onclick = () => show("screenForm");
 document.getElementById("btnGen").onclick = generate;
+document.getElementById("langToggle").onclick = (e) => {
+    lang = lang === "ru" ? "en" : "ru";
+    e.target.textContent = lang.toUpperCase();
+};
 
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.MainButton.setParams({ text: i18n[lang].saveBtn, color: "#007AFF" });
+if(tg) { 
+    tg.ready(); 
+    tg.expand();
+    tg.MainButton.setParams({ text: i18n[lang].saveBtn, color: "#007AFF" });
 }
