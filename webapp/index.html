@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>My Route - App</title>
+    <title>My Route</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=2" />
+    <link rel="stylesheet" href="./styles.css?v=FINAL_BTN" />
   </head>
   <body>
     <main class="container">
+      
       <!-- WELCOME -->
       <section id="screenWelcome">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -27,14 +28,23 @@
             <div style="font-weight:600;">Параметры</div>
             <div style="width:50px;"></div>
         </div>
+
         <div class="section-header">МАРШРУТ</div>
         <div class="ios-group">
-            <div class="ios-row"><span class="ios-label">Куда</span><input id="destination" class="ios-input" placeholder="Париж" /></div>
-            <div class="ios-row"><span class="ios-label">Дней</span><input id="days" type="number" class="ios-input" placeholder="3" /></div>
+            <div class="ios-row">
+                <span class="ios-label">Куда</span>
+                <input id="destination" class="ios-input" placeholder="Париж" />
+            </div>
+            <div class="ios-row">
+                <span class="ios-label">Дней</span>
+                <input id="days" type="number" class="ios-input" placeholder="3" />
+            </div>
         </div>
+
         <div class="section-header">УСЛОВИЯ</div>
         <div class="ios-group">
-            <div class="ios-row"><span class="ios-label">Бюджет</span>
+            <div class="ios-row">
+                <span class="ios-label">Бюджет</span>
                 <select id="budget" class="ios-input ios-select">
                     <option value="economy">Эконом</option>
                     <option value="medium" selected>Средний</option>
@@ -42,19 +52,24 @@
                     <option value="premium">Премиум</option>
                 </select>
             </div>
-            <div class="ios-row"><span class="ios-label">Кто едет</span>
+            <div class="ios-row">
+                <span class="ios-label">Кто едет</span>
                 <select id="companions" class="ios-input ios-select">
                     <option value="solo">Один</option>
                     <option value="couple" selected>Пара</option>
-                    <option value="family">Семья</option>
+                    <option value="family">Семья (3-4)</option>
                     <option value="group">Компания</option>
                 </select>
             </div>
         </div>
+
         <div class="section-header">ДЕТАЛИ</div>
         <div class="ios-group">
-            <div class="ios-row"><textarea id="notes" class="ios-input" placeholder="Напишите подробно..."></textarea></div>
+            <div class="ios-row">
+                <textarea id="notes" class="ios-input" style="text-align:left;" placeholder="Напишите подробно..."></textarea>
+            </div>
         </div>
+
         <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
@@ -64,11 +79,18 @@
             <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
             <button id="newBtn" class="ios-link">Готово</button>
         </div>
+
         <div class="book-view">
             <div id="summary" class="book-intro"></div>
             <div id="bookBody" class="article-content"></div>
         </div>
+
+        <!-- ВОТ ОНА: НАША ЖЕЛЕЗОБЕТОННАЯ КНОПКА, КОТОРАЯ НИКУДА НЕ ИСЧЕЗНЕТ -->
+        <button id="htmlSaveBtn" style="margin-top: 20px; margin-bottom: 40px; background-color: #007AFF; color: white; padding: 16px; border-radius: 14px; width: 100%; font-size: 17px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3);">
+            📥 Сохранить в чат
+        </button>
       </section>
+
     </main>
 
     <script>
@@ -77,8 +99,8 @@
 
     const API_BASE = "https://my-route-api.onrender.com";
     const i18n = {
-      ru: { loading: "Строится...", saveBtn: "📥 Сохранить в чат", btnGen: "Создать историю" },
-      en: { loading: "Building...", saveBtn: "📥 Save to Chat", btnGen: "Write Guide" }
+      ru: { loading: "Строится...", btnGen: "Создать историю", err: "Ошибка генерации" },
+      en: { loading: "Building...", btnGen: "Write Guide", err: "Generation error" }
     };
     let lang = "ru";
     let currentRouteHTML = "";
@@ -88,16 +110,7 @@
             document.getElementById(s).classList.add("hidden");
         });
         document.getElementById(id).classList.remove("hidden");
-        
-        if (tg && tg.MainButton) {
-            if (id === "screenResult") {
-                tg.MainButton.setText(i18n[lang].saveBtn);
-                tg.MainButton.setParams({color: "#007AFF", text_color: "#ffffff"});
-                tg.MainButton.show();
-            } else {
-                tg.MainButton.hide();
-            }
-        }
+        window.scrollTo(0,0);
     }
 
     function formatForTelegram(html) {
@@ -113,6 +126,7 @@
       if(!dest || !days) return alert("Заполните город и дни");
       
       btn.disabled = true; btn.textContent = i18n[lang].loading;
+      
       try {
         const res = await fetch(`${API_BASE}/route/generate`, {
           method: "POST", headers: {"Content-Type": "application/json"},
@@ -125,15 +139,22 @@
         });
         const data = await res.json();
         let html = data.html_content || "";
+        if (!html && data.daily_plan) {
+            data.daily_plan.forEach(d => {
+                html += `<h3>День ${d.day}</h3>`;
+                const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
+                items.forEach(it => html += `<p>${it}</p>`);
+            });
+        }
         
-        // ВОТ ЗДЕСЬ ФОРМИРУЕТСЯ РЕАЛЬНЫЙ ТЕКСТ
         currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n\n` + html;
         
         document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
         document.getElementById("bookBody").innerHTML = html;
+        
         show("screenResult");
       } catch(e) {
-        alert("Ошибка: " + e.message);
+        alert(i18n[lang].err);
       } finally {
         btn.disabled = false; btn.textContent = i18n[lang].btnGen;
       }
@@ -144,17 +165,22 @@
         document.getElementById("backBtn").onclick = () => show("screenWelcome");
         document.getElementById("newBtn").onclick = () => show("screenForm");
         document.getElementById("btnGen").onclick = generate;
+        
         document.getElementById("langToggle").onclick = (e) => {
-            lang = lang === "ru" ? "en" : "ru"; e.target.textContent = lang.toUpperCase();
+            lang = lang === "ru" ? "en" : "ru"; 
+            e.target.textContent = lang.toUpperCase();
         };
         
-        if (tg) {
-            tg.onEvent('mainButtonClicked', function() {
-                if (!currentRouteHTML) return;
-                // ОТПРАВЛЯЕМ РЕАЛЬНЫЙ МАРШРУТ
-                tg.sendData(formatForTelegram(currentRouteHTML)); 
-            });
-        }
+        // ОБРАБОТЧИК НАШЕЙ НОВОЙ ВСТРОЕННОЙ КНОПКИ
+        document.getElementById("htmlSaveBtn").onclick = function() {
+            if (!currentRouteHTML) return;
+            if (tg) {
+                // Отправляем данные боту
+                tg.sendData(formatForTelegram(currentRouteHTML));
+            } else {
+                alert("Это приложение должно быть открыто внутри Telegram!");
+            }
+        };
     };
     </script>
   </body>
