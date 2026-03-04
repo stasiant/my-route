@@ -1,21 +1,24 @@
 :root {
-  --bg-app: #F2F2F7;       
+  /* Нежный градиентный фон как на скриншоте */
+  --bg-gradient: linear-gradient(135deg, #eaf2ff 0%, #f0e6fa 50%, #ffffff 100%);
   --bg-card: #FFFFFF;      
-  --text-main: #000000;
+  --text-main: #111111;
   --text-sec: #8E8E93;     
-  --blue: #007AFF;         
-  --radius: 12px;
+  --blue: #3b82f6;         
+  --radius: 16px;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
-  background-color: var(--bg-app);
+  background: var(--bg-gradient);
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 .container {
@@ -30,151 +33,150 @@ body {
 .hidden { display: none !important; }
 
 /* ========================================= */
-/* НОВЫЙ ЭКРАН ПРИВЕТСТВИЯ (ПОЛНОЭКРАННЫЙ)   */
+/* ЭКРАН ПРИВЕТСТВИЯ (Остался без изменений) */
 /* ========================================= */
 
 .welcome-screen {
   position: fixed;
-  top: 0; 
-  left: 0; 
-  width: 100vw; 
-  height: 100vh;
+  top: 0; left: 0; width: 100vw; height: 100vh;
   background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1000&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center bottom;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
+  background-size: cover; background-position: center bottom;
+  z-index: 1000; display: flex; flex-direction: column;
 }
 
 .welcome-overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.6) 100%);
   z-index: 1;
 }
 
 .welcome-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px 24px 20px 24px;
+  position: relative; z-index: 2; display: flex; flex-direction: column;
+  height: 100%; padding: 20px 24px 20px 24px;
 }
 
-.welcome-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
+.welcome-header { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.welcome-logo { color: #fff; font-weight: 700; font-size: 18px; }
+.welcome-lang { background: transparent; border: none; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; }
 
-.welcome-logo {
-  color: #fff;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-}
-
-.welcome-lang {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.welcome-text-block {
-  margin-top: auto; 
-  /* ПОДНИМАЕМ БЛОК ВЫШЕ ОТ НИЗА ЭКРАНА */
-  margin-bottom: 12vh; 
-}
-
+.welcome-text-block { margin-top: auto; margin-bottom: 12vh; }
 .welcome-title {
-  color: #ffffff;
-  font-size: 32px; 
-  font-weight: 800;
-  line-height: 1.2; 
-  margin: 0 0 16px 0;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  color: #ffffff; font-size: 32px; font-weight: 800; line-height: 1.2; 
+  margin: 0 0 16px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.4);
 }
-
 .welcome-subtitle {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 18px;
-  line-height: 1.4;
-  margin: 0 0 32px 0;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
-  font-weight: 400;
+  color: rgba(255, 255, 255, 0.95); font-size: 18px; line-height: 1.4; 
+  margin: 0 0 32px 0; text-shadow: 0 1px 6px rgba(0,0,0,0.4);
 }
-
 .welcome-btn {
-  background-color: #007AFF;
-  color: white;
-  border: none;
-  width: 100%;
-  padding: 18px;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
-}
-.welcome-btn:active {
-  transform: scale(0.98);
+  background-color: var(--blue); color: white; border: none; width: 100%;
+  padding: 18px; font-size: 18px; font-weight: 600; border-radius: 14px; 
+  cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
+/* ========================================= */
+/* ЭКРАН ФОРМЫ (КАК НА СКРИНШОТЕ)            */
+/* ========================================= */
 
-/* ========================================= */
-/* ОСТАЛЬНОЕ ПРИЛОЖЕНИЕ (ФОРМА / РЕЗУЛЬТАТ)  */
-/* ========================================= */
+.page-title {
+  font-family: "Georgia", serif; /* Элегантный шрифт для заголовка */
+  font-size: 32px;
+  font-weight: 400;
+  margin: 20px 0 30px 0;
+  color: #111;
+}
 
 .section-header {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   color: var(--text-sec);
-  margin: 0 0 8px 16px;
+  margin: 0 0 8px 12px;
+  letter-spacing: 0.5px;
 }
 
 .ios-group {
   background: var(--bg-card);
   border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03); /* Нежная тень */
   overflow: hidden;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
 .ios-row {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  justify-content: space-between;
+  padding: 14px 16px;
   background: #fff;
-  border-bottom: 0.5px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .ios-row:last-child { border-bottom: none; }
 
-.ios-label { width: 110px; font-size: 17px; color: #000; }
-
-.ios-input {
-  flex: 1; border: none; font-size: 17px; color: var(--blue);
-  outline: none; text-align: right; background: transparent; font-family: inherit;
+.row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #111;
 }
-.ios-input::placeholder { color: var(--text-sec); }
 
-textarea.ios-input { text-align: left; min-height: 80px; padding-top: 4px; resize: none; }
+.ios-label { 
+  font-size: 17px; 
+  color: #111; 
+}
 
+/* Округлые поля ввода внутри строк */
+.ios-input-pill {
+  border: 1px solid #E5E5EA;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 16px;
+  color: #111;
+  outline: none;
+  text-align: right;
+  background: #FCFCFC;
+  width: 140px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.ios-input-pill:focus { border-color: var(--blue); }
+.input-small { width: 70px; text-align: center; }
+
+/* Выпадающие списки (со стрелочкой) */
 .ios-select {
   appearance: none; -webkit-appearance: none; background-color: transparent;
-  direction: rtl; padding-right: 0; color: var(--blue); cursor: pointer;
+  direction: rtl; color: #111; cursor: pointer; font-size: 17px;
+  border: none; outline: none; padding-right: 20px;
+  /* Рисуем стрелочку */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238E8E93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
 }
-.ios-select:focus { outline: none; }
 
-.ios-btn {
-  width: 100%; background-color: var(--blue); color: #fff; font-size: 17px; font-weight: 600;
-  padding: 16px; border-radius: 14px; border: none; cursor: pointer; margin-top: 10px;
+/* Текстовая область с иконкой */
+.align-top { align-items: flex-start; }
+.icon-wrap { margin-top: 2px; margin-right: 12px; color: #111; }
+.ios-textarea { 
+  flex: 1; border: none; font-size: 17px; color: #111; outline: none; 
+  background: transparent; font-family: inherit; min-height: 80px; resize: none;
 }
-.ios-btn:active { opacity: 0.7; transform: scale(0.99); }
+.ios-textarea::placeholder { color: var(--text-sec); }
+
+/* Главная синяя кнопка (в виде таблетки) */
+.pill-btn {
+  width: 100%; 
+  background: linear-gradient(180deg, #4da1ff 0%, #2575fc 100%);
+  color: #fff; 
+  font-size: 18px; 
+  font-weight: 600;
+  padding: 18px; 
+  border-radius: 30px; /* Сильное скругление */
+  border: none; 
+  cursor: pointer; 
+  margin-top: 10px;
+  box-shadow: 0 4px 14px rgba(37, 117, 252, 0.3);
+  transition: transform 0.1s;
+}
+.pill-btn:active { transform: scale(0.98); }
 
 .ios-link { background: none; border: none; color: var(--blue); font-size: 17px; cursor: pointer; }
 
@@ -185,7 +187,8 @@ textarea.ios-input { text-align: left; min-height: 80px; padding-top: 4px; resiz
 }
 .book-intro { font-size: 19px; font-weight: 600; line-height: 1.4; margin-bottom: 30px; color: #333; font-style: italic; }
 
-.article-content h2 { font-size: 24px; font-weight: 800; margin-top: 45px; margin-bottom: 20px; color: #000; border-bottom: 2px solid #007AFF; padding-bottom: 8px; display: inline-block; }
-.article-content h3 { font-size: 20px; font-weight: 700; margin-top: 35px; margin-bottom: 12px; color: #007AFF; }
-.article-content p { font-size: 16px; line-height: 1.6; margin-bottom: 16px; }
+.article-content h2 { font-size: 24px; font-weight: 800; margin-top: 45px; margin-bottom: 20px; color: #000; border-bottom: 2px solid var(--blue); padding-bottom: 8px; display: inline-block; }
+.article-content h3 { font-size: 20px; font-weight: 700; margin-top: 35px; margin-bottom: 12px; color: var(--blue); }
+.article-content p { font-size: 16px; line-height: 1.6; margin-bottom: 16px; text-align: left; }
+.article-content i { display: block; color: var(--text-sec); margin-top:-5px; margin-bottom:15px; border-left: 2px solid var(--blue); padding-left: 10px; font-style: normal; }
 .article-content b { color: #000; font-weight: 600; }
