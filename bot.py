@@ -5,11 +5,11 @@ import json
 import urllib.request
 import urllib.parse
 import re
-import ssl  # <--- ИМПОРТИРУЕМ SSL
+import ssl
 from openai import OpenAI
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton, LabeledPrice, PreCheckoutQuery
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 
@@ -25,16 +25,16 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- ФУНКЦИЯ ЯНДЕКСА (С ФИКСОМ ДЛЯ MAC) ---
+# --- ПАМЯТЬ ДЛЯ ЗАКАЗОВ ---
+# Мы сохраняем параметры маршрута сюда, пока пользователь оплачивает счет
+pending_routes = {}
+
 def get_yandex_coords(query: str, api_key: str) -> str:
-    if not api_key: return "📍 <i>[Нет ключа Яндекса]</i>"
+    if not api_key: return "📍 <i>[Нет ключа]</i>"
     try:
         url = f"https://geocode-maps.yandex.ru/1.x/?apikey={api_key}&geocode={urllib.parse.quote(query)}&format=json"
         req = urllib.request.Request(url)
-        
-        # ОТКЛЮЧАЕМ ПРОВЕРКУ SSL ДЛЯ МУКА
         context = ssl._create_unverified_context()
-        
         with urllib.request.urlopen(req, timeout=5, context=context) as response:
             res = json.loads(response.read().decode('utf-8'))
             features = res.get("response", {}).get("GeoObjectCollection", {}).get("featureMember", [])
@@ -43,8 +43,7 @@ def get_yandex_coords(query: str, api_key: str) -> str:
             lon, lat = pos.split(" ")
             return f"📍 <b>({round(float(lat), 5)}, {round(float(lon), 5)})</b>"
     except Exception as e:
-        print(f"Yandex Error for '{query}': {e}")
-        return "📍 <i>[Ошибка связи с Яндексом]</i>"
+        return "📍 <i>[Ошибка гео]</i>"
 
 def extract_json(text: str) -> str:
     text = (text or "").strip()
@@ -57,7 +56,6 @@ def extract_json(text: str) -> str:
 
 def generate_route_local(payload: dict) -> dict:
     client = OpenAI(api_key=OPENAI_API_KEY, timeout=300.0)
-    
     days = payload.get("days", 3)
     system = (
         f"Ты — профессиональный гид. Твоя задача — составить маршрут РОВНО НА {days} ДНЕЙ. "
@@ -123,10 +121,11 @@ async def cmd_start(message: Message):
         resize_keyboard=True
     )
     await message.answer(
-        "Привет! 🌍 Я твой персональный ИИ-редактор путешествий.\nЖми на кнопку внизу экрана 👇",
-        reply_markup=markup
+        "Привет! 🌍 Я твой ИИ-гид.\nСоздание идеального маршрута стоит <b>15 ⭐️ (Звезд Telegram)</b>. \nЕсли что-то пойдет не так, звезды вернутся автоматически!\n\nЖми на кнопку 👇",
+        reply_markup=markup, parse_mode=ParseMode.HTML
     )
 
+# 1. ПОЛУЧАЕМ ДАННЫЕ ИЗ WEB APP И ВЫСТАВЛЯЕМ СЧЕТ
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
     data = message.web_app_data.data
@@ -137,42 +136,80 @@ async def handle_web_app_data(message: Message):
             dest = api_params.get("destination", "Город")
             days = api_params.get("days", "?")
             
-            await message.answer(
-                f"⏳ <b>Принято!</b>\nНачинаю составлять маршрут: <b>{dest} на {days} дней</b>.\n\n"
-                f"Я работаю автономно! ИИ пишет текст, это займет 1-3 минуты. Я пришлю всё автоматически. 🚀",
-                parse_mode=ParseMode.HTML
-            )
+            # Сохраняем параметры в память для этого пользователя
+            user_id = message.from_user.id
+            pending_routes[user_id] = api_params
             
-            try:
-                response_data = await asyncio.to_thread(generate_route_local, api_params)
-                route_html = response_data.get("html_content", "")
-                
-                if not route_html:
-                    await message.answer("❌ Извините, не удалось сгенерировать маршрут.")
-                    return
-                
-                route_text = f"<b>МАРШРУТ: {dest} ({days} дн.)</b>\n\n" + format_for_telegram(route_html)
-                
-                chunks = smart_split(route_text)
-                for i, chunk in enumerate(chunks):
-                    prefix = f"<i>(Часть {i+1}/{len(chunks)})</i>\n\n" if len(chunks) > 1 else ""
-                    try:
-                        await message.answer(prefix + chunk, parse_mode=ParseMode.HTML)
-                        await asyncio.sleep(0.5)
-                    except Exception as e:
-                        print(f"Ошибка отправки куска {i+1}: {e}")
-                        await message.answer(prefix + chunk)
+            # Создаем цену (15 XTR - это Telegram Звезды)
+            prices = [LabeledPrice(label=f"Маршрут в {dest} ({days} дн.)", amount=15)]
+            
+            await bot.send_invoice(
+                chat_id=message.chat.id,
+                title=f"Создание маршрута: {dest}",
+                description=f"Персональный ИИ-гид напишет для вас подробный план на {days} дней с координатами и логистикой.",
+                payload="route_payment_payload",
+                provider_token="", # Обязательно пусто для Звезд!
+                currency="XTR",
+                prices=prices
+            )
+    except Exception as e:
+        print(f"Ошибка парсинга WebApp: {e}")
 
-            except Exception as e:
-                print(f"Ошибка AI: {e}")
-                await message.answer("❌ Произошла ошибка при составлении маршрута.")
-            return
+# 2. ПОДТВЕРЖДЕНИЕ ПЛАТЕЖА ПЕРЕД СПИСАНИЕМ
+@dp.pre_checkout_query()
+async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
-    except json.JSONDecodeError:
-        pass
+# 3. ПЛАТЕЖ ПРОШЕЛ УСПЕШНО -> ГЕНЕРИРУЕМ МАРШРУТ
+@dp.message(F.successful_payment)
+async def process_successful_payment(message: Message):
+    user_id = message.from_user.id
+    # Получаем уникальный ID платежа для возможного возврата
+    charge_id = message.successful_payment.telegram_payment_charge_id 
+    
+    api_params = pending_routes.get(user_id)
+    if not api_params:
+        # Если почему-то нет параметров, возвращаем деньги сразу
+        await bot.refund_star_payment(user_id=user_id, telegram_payment_charge_id=charge_id)
+        await message.answer("❌ Ошибка: данные маршрута потерялись. Звезды возвращены!")
+        return
+
+    dest = api_params.get("destination", "Город")
+    days = api_params.get("days", "?")
+    
+    await message.answer(f"⭐️ <b>Оплата получена!</b>\nНачинаю составлять маршрут: <b>{dest} на {days} дней</b>.\nПожалуйста, подождите 1-3 минуты 🚀", parse_mode=ParseMode.HTML)
+    
+    try:
+        # Пытаемся сгенерировать
+        response_data = await asyncio.to_thread(generate_route_local, api_params)
+        route_html = response_data.get("html_content", "")
+        
+        if not route_html:
+            raise ValueError("Пустой HTML от ИИ")
+            
+        route_text = f"<b>МАРШРУТ: {dest} ({days} дн.)</b>\n\n" + format_for_telegram(route_html)
+        chunks = smart_split(route_text)
+        
+        for i, chunk in enumerate(chunks):
+            prefix = f"<i>(Часть {i+1}/{len(chunks)})</i>\n\n" if len(chunks) > 1 else ""
+            await message.answer(prefix + chunk, parse_mode=ParseMode.HTML)
+            await asyncio.sleep(0.5)
+            
+        # Удаляем из памяти после успеха
+        del pending_routes[user_id]
+
+    except Exception as e:
+        print(f"Ошибка при генерации маршрута: {e}")
+        # ==== ВОЗВРАТ ЗВЕЗД ПРИ ОШИБКЕ ====
+        try:
+            await bot.refund_star_payment(user_id=user_id, telegram_payment_charge_id=charge_id)
+            await message.answer("❌ <b>Произошла ошибка при составлении маршрута (сбой ИИ).</b>\n\n✅ <b>Не переживайте, 15 ⭐️ были автоматически возвращены на ваш счет!</b> Попробуйте еще раз.", parse_mode=ParseMode.HTML)
+        except Exception as refund_error:
+            print(f"Ошибка возврата звезд: {refund_error}")
+            await message.answer("❌ Произошла критическая ошибка. Напишите в поддержку.")
 
 async def main():
-    print("Бот запущен. НОВАЯ ЛОГИКА: AI + YANDEX С ОТКЛЮЧЕННЫМ SSL!")
+    print("Бот запущен. ПОДКЛЮЧЕНЫ ТЕЛЕГРАМ ЗВЕЗДЫ (15 XTR) И АВТОВОЗВРАТ!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
