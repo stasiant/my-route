@@ -5,6 +5,7 @@ import json
 import urllib.request
 import urllib.parse
 import re
+import ssl  # <--- ИМПОРТИРУЕМ SSL
 from openai import OpenAI
 
 from aiogram import Bot, Dispatcher, F
@@ -24,14 +25,17 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- ФУНКЦИИ ЯНДЕКСА И ИИ ТЕПЕРЬ ЖИВУТ ПРЯМО В БОТЕ ---
-
+# --- ФУНКЦИЯ ЯНДЕКСА (С ФИКСОМ ДЛЯ MAC) ---
 def get_yandex_coords(query: str, api_key: str) -> str:
     if not api_key: return "📍 <i>[Нет ключа Яндекса]</i>"
     try:
         url = f"https://geocode-maps.yandex.ru/1.x/?apikey={api_key}&geocode={urllib.parse.quote(query)}&format=json"
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=5) as response:
+        
+        # ОТКЛЮЧАЕМ ПРОВЕРКУ SSL ДЛЯ МУКА
+        context = ssl._create_unverified_context()
+        
+        with urllib.request.urlopen(req, timeout=5, context=context) as response:
             res = json.loads(response.read().decode('utf-8'))
             features = res.get("response", {}).get("GeoObjectCollection", {}).get("featureMember", [])
             if not features: return "📍 <i>[Место не найдено]</i>"
@@ -52,7 +56,7 @@ def extract_json(text: str) -> str:
     return text
 
 def generate_route_local(payload: dict) -> dict:
-    client = OpenAI(api_key=OPENAI_API_KEY, timeout=300.0) # Бот готов ждать 5 минут!
+    client = OpenAI(api_key=OPENAI_API_KEY, timeout=300.0)
     
     days = payload.get("days", 3)
     system = (
@@ -88,8 +92,6 @@ def generate_route_local(payload: dict) -> dict:
 
     return data
 
-# --- УТИЛИТЫ ФОРМАТИРОВАНИЯ ---
-
 def format_for_telegram(html: str) -> str:
     text = re.sub(r'<h2>(.*?)</h2>', r'\n\n<b>===== \1 =====</b>\n', html, flags=re.IGNORECASE)
     text = re.sub(r'<h3>(.*?)</h3>', r'\n\n<b>🗓 \1</b>\n', text, flags=re.IGNORECASE)
@@ -112,8 +114,6 @@ def smart_split(text: str, max_len: int = 4000) -> list:
             current_chunk = p
     if current_chunk: chunks.append(current_chunk)
     return chunks
-
-# --- ХЭНДЛЕРЫ БОТА ---
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
@@ -144,7 +144,6 @@ async def handle_web_app_data(message: Message):
             )
             
             try:
-                # ВЫЗЫВАЕМ ИИ НАПРЯМУЮ, МИНУЯ СЕРВЕР RENDER
                 response_data = await asyncio.to_thread(generate_route_local, api_params)
                 route_html = response_data.get("html_content", "")
                 
@@ -173,7 +172,7 @@ async def handle_web_app_data(message: Message):
         pass
 
 async def main():
-    print("Бот запущен. НОВАЯ ЛОГИКА: AI ВСТРОЕН В БОТА (БЕЗ ТАЙМАУТОВ)!")
+    print("Бот запущен. НОВАЯ ЛОГИКА: AI + YANDEX С ОТКЛЮЧЕННЫМ SSL!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
