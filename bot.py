@@ -4,7 +4,7 @@ import logging
 import json
 import urllib.request
 import re
-import ssl  # ДОБАВИЛИ ИМПОРТ ДЛЯ SSL
+import ssl
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
@@ -20,20 +20,18 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Фоновая функция для запроса к твоему API (С ИГНОРИРОВАНИЕМ SSL)
 def fetch_route_sync(payload):
     url = "https://my-route-api.onrender.com/route/generate"
     req = urllib.request.Request(url, method="POST")
     req.add_header("Content-Type", "application/json")
     data = json.dumps(payload).encode("utf-8")
     
-    # === ВОТ ЭТОТ КОД РЕШАЕТ ОШИБКУ НА MAC ===
     context = ssl._create_unverified_context()
     
-    with urllib.request.urlopen(req, data=data, timeout=120, context=context) as response:
+    # Ждем до 3-х минут (14 дней генерируются долго!)
+    with urllib.request.urlopen(req, data=data, timeout=180, context=context) as response:
         return json.loads(response.read().decode("utf-8"))
 
-# Функция для конвертации HTML с сервера в красивый текст для Телеграма
 def format_for_telegram(html: str) -> str:
     text = re.sub(r'<h2>(.*?)</h2>', r'\n\n<b>===== \1 =====</b>\n', html, flags=re.IGNORECASE)
     text = re.sub(r'<h3>(.*?)</h3>', r'\n\n<b>🗓 \1</b>\n', text, flags=re.IGNORECASE)
@@ -44,22 +42,35 @@ def format_for_telegram(html: str) -> str:
     text = re.sub(r'<br/?>', r'\n', text, flags=re.IGNORECASE)
     return text.strip()
 
+# --- УМНАЯ НАРЕЗКА СООБЩЕНИЙ ---
+def smart_split(text: str, max_len: int = 4000) -> list:
+    paragraphs = text.split('\n\n')
+    chunks = []
+    current_chunk = ""
+    
+    for p in paragraphs:
+        if len(current_chunk) + len(p) + 2 <= max_len:
+            current_chunk += ("\n\n" + p) if current_chunk else p
+        else:
+            if current_chunk: chunks.append(current_chunk)
+            current_chunk = p
+            
+    if current_chunk:
+        chunks.append(current_chunk)
+    return chunks
+
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     web_app_url = "https://my-route-webapp.onrender.com" 
-    
     markup = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="🚀 Открыть приложение", web_app=WebAppInfo(url=web_app_url))]],
         resize_keyboard=True
     )
     
-    welcome_text = (
-        "Привет! 🌍 Я твой персональный ИИ-редактор путешествий.\n\n"
-        "Я создам для тебя идеальную историю поездки, учитывая твой бюджет, темп и компанию.\n\n"
-        "Жми на кнопку внизу экрана 👇"
+    await message.answer(
+        "Привет! 🌍 Я твой персональный ИИ-редактор путешествий.\nЖми на кнопку внизу экрана 👇",
+        reply_markup=markup
     )
-    
-    await message.answer(welcome_text, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
@@ -74,7 +85,7 @@ async def handle_web_app_data(message: Message):
             
             await message.answer(
                 f"⏳ <b>Принято!</b>\nНачинаю составлять маршрут: <b>{dest} на {days} дней</b>.\n\n"
-                f"Это займет около 30-40 секунд. Можешь свернуть бота или заблокировать телефон, я пришлю гид автоматически! 🚀",
+                f"Так как дней много, это займет около 1-2 минут. Можешь свернуть бота, я пришлю гид автоматически! 🚀",
                 parse_mode=ParseMode.HTML
             )
             
@@ -83,26 +94,34 @@ async def handle_web_app_data(message: Message):
                 route_html = response_data.get("html_content", "")
                 
                 if not route_html:
-                    await message.answer("❌ Извините, не удалось сгенерировать маршрут. Попробуйте еще раз.")
+                    await message.answer("❌ Извините, не удалось сгенерировать маршрут.")
                     return
                 
-                route_text = f"<b>Маршрут: {dest} ({days} дн.)</b>\n\n" + format_for_telegram(route_html)
+                route_text = f"<b>МАРШРУТ: {dest} ({days} дн.)</b>\n\n" + format_for_telegram(route_html)
                 
-                if len(route_text) > 4000:
-                    for x in range(0, len(route_text), 4000):
-                        await message.answer(route_text[x:x+4000], parse_mode=ParseMode.HTML)
-                else:
-                    await message.answer(route_text, parse_mode=ParseMode.HTML)
+                # Отправляем умными кусками
+                chunks = smart_split(route_text)
+                for i, chunk in enumerate(chunks):
+                    # Если кусков больше одного, добавляем нумерацию
+                    prefix = f"<i>(Часть {i+1}/{len(chunks)})</i>\n\n" if len(chunks) > 1 else ""
+                    try:
+                        await message.answer(prefix + chunk, parse_mode=ParseMode.HTML)
+                        await asyncio.sleep(0.5) # Пауза, чтобы Телеграм не ругался на спам
+                    except Exception as e:
+                        print(f"Ошибка отправки куска {i+1}: {e}")
+                        # Фоллбэк: если HTML все-таки сломался, шлем без форматирования
+                        await message.answer(prefix + chunk)
+
             except Exception as e:
                 print(f"Ошибка API: {e}")
-                await message.answer("❌ Произошла ошибка при составлении маршрута. Сервер не ответил вовремя.")
+                await message.answer("❌ Произошла ошибка при составлении маршрута.")
             return
 
     except json.JSONDecodeError:
         pass
 
 async def main():
-    print("Бот запущен. Проверка SSL отключена!")
+    print("Бот запущен. Умная нарезка включена!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
