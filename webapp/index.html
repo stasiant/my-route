@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>My Route</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=APPLE_FORM" />
+    <link rel="stylesheet" href="./styles.css?v=BACKGROUND_GEN" />
   </head>
   <body>
     <!-- ЭКРАН ПРИВЕТСТВИЯ -->
@@ -27,12 +27,11 @@
     <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
     <main class="container">
       
-      <!-- ЭКРАН ФОРМЫ (НОВЫЙ ДИЗАЙН) -->
+      <!-- ЭКРАН ФОРМЫ -->
       <section id="screenForm" class="hidden">
         
         <h1 class="page-title">Параметры</h1>
 
-        <!-- МАРШРУТ -->
         <div class="section-header">МАРШРУТ</div>
         <div class="ios-group">
             <div class="ios-row">
@@ -51,7 +50,6 @@
             </div>
         </div>
 
-        <!-- УСЛОВИЯ -->
         <div class="section-header">УСЛОВИЯ</div>
         <div class="ios-group">
             <div class="ios-row">
@@ -80,7 +78,6 @@
             </div>
         </div>
 
-        <!-- ДЕТАЛИ -->
         <div class="section-header">ДЕТАЛИ</div>
         <div class="ios-group">
             <div class="ios-row align-top">
@@ -93,109 +90,57 @@
 
         <button id="btnGen" class="pill-btn">Создать историю</button>
       </section>
-
-      <!-- RESULT -->
-      <section id="screenResult" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h2 style="margin:0; font-size:24px; font-family:'Georgia', serif;">Ваш гид</h2>
-            <button id="newBtn" class="ios-link">Новый</button>
-        </div>
-
-        <div class="book-view">
-            <div id="summary" class="book-intro"></div>
-            <div id="bookBody" class="article-content"></div>
-        </div>
-
-        <button id="htmlSaveBtn" class="pill-btn" style="margin-bottom: 40px;">
-            📥 Сохранить в чат
-        </button>
-      </section>
     </main>
 
     <script>
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.ready(); tg.expand(); }
 
-    const API_BASE = "https://my-route-api.onrender.com";
-    const i18n = {
-      ru: { loading: "Строится...", btnGen: "Создать историю", err: "Ошибка генерации" },
-      en: { loading: "Building...", btnGen: "Write Guide", err: "Generation error" }
-    };
     let lang = "ru";
-    let currentRouteHTML = "";
 
-    function show(id) {
+    document.getElementById("btnStart").onclick = () => {
         document.getElementById("screenWelcome").classList.add("hidden");
-        document.getElementById("screenForm").classList.add("hidden");
-        document.getElementById("screenResult").classList.add("hidden");
-        document.getElementById(id).classList.remove("hidden");
+        document.getElementById("screenForm").classList.remove("hidden");
         window.scrollTo(0,0);
-    }
+    };
 
-    function formatForTelegram(html) {
-      let text = html.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
-      text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n").replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
-      return text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>").replace(/<p>/gi, "").replace(/<\/p>/gi, "\n").replace(/<br>/gi, "\n").trim();
-    }
-
-    async function generate() {
+    // НОВАЯ ЛОГИКА: Мгновенная отправка и закрытие
+    document.getElementById("btnGen").onclick = function() {
       const btn = document.getElementById("btnGen");
       const dest = document.getElementById("destination").value;
       const days = document.getElementById("days").value;
+      
       if(!dest || !days) return alert("Заполните город и дни");
       
-      btn.disabled = true; btn.textContent = i18n[lang].loading;
+      btn.disabled = true; 
+      btn.textContent = "Передаю боту...";
       
-      try {
-        const res = await fetch(`${API_BASE}/route/generate`, {
-          method: "POST", headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            language: lang, destination: dest, days: parseInt(days),
-            budget: document.getElementById("budget").value, pace: "normal", 
-            companions: document.getElementById("companions").value, interests: [],
+      const payload = {
+        action: "generate_route",
+        params: {
+            language: lang,
+            destination: dest,
+            days: parseInt(days),
+            budget: document.getElementById("budget").value,
+            pace: "normal", 
+            companions: document.getElementById("companions").value,
             notes: document.getElementById("notes").value
-          })
-        });
-        const data = await res.json();
-        let html = data.html_content || "";
-        
-        if (!html && data.daily_plan) {
-            data.daily_plan.forEach(d => {
-                html += `<h3>День ${d.day}</h3>`;
-                const items = [...(d.morning||[]), ...(d.afternoon||[]), ...(d.evening||[])];
-                items.forEach(it => html += `<p>${it}</p>`);
-            });
         }
-        
-        currentRouteHTML = `<b>Маршрут: ${dest} (${days} дн.)</b>\n\n` + html;
-        
-        document.getElementById("summary").textContent = data.summary || `Ваш маршрут по ${dest}`;
-        document.getElementById("bookBody").innerHTML = html;
-        
-        show("screenResult");
-      } catch(e) {
-        alert(i18n[lang].err);
-      } finally {
-        btn.disabled = false; btn.textContent = i18n[lang].btnGen;
-      }
-    }
+      };
 
-    document.getElementById("btnStart").onclick = () => show("screenForm");
-    document.getElementById("newBtn").onclick = () => show("screenForm");
-    document.getElementById("btnGen").onclick = generate;
+      if (tg) {
+          // Отправляем JSON боту
+          tg.sendData(JSON.stringify(payload));
+          // ПРИНУДИТЕЛЬНО И МГНОВЕННО ЗАКРЫВАЕМ ПРИЛОЖЕНИЕ
+          tg.close();
+      } else {
+          alert("Откройте в Telegram!");
+      }
+    };
     
     document.getElementById("langToggle").onclick = (e) => {
         lang = lang === "ru" ? "en" : "ru"; 
         e.target.textContent = lang.toUpperCase();
-    };
-    
-    document.getElementById("htmlSaveBtn").onclick = function() {
-        if (!currentRouteHTML) return;
-        if (tg) {
-            tg.sendData(formatForTelegram(currentRouteHTML));
-        } else {
-            alert("Тестовая среда: " + formatForTelegram(currentRouteHTML));
-        }
     };
     </script>
   </body>
