@@ -4,6 +4,8 @@ import logging
 import json
 import urllib.request
 import re
+import ssl  # ДОБАВИЛИ ИМПОРТ ДЛЯ SSL
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import CommandStart
@@ -18,14 +20,17 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Фоновая функция для запроса к твоему API
+# Фоновая функция для запроса к твоему API (С ИГНОРИРОВАНИЕМ SSL)
 def fetch_route_sync(payload):
     url = "https://my-route-api.onrender.com/route/generate"
     req = urllib.request.Request(url, method="POST")
     req.add_header("Content-Type", "application/json")
     data = json.dumps(payload).encode("utf-8")
-    # Даем 120 секунд, так как ИИ + Яндекс могут думать долго
-    with urllib.request.urlopen(req, data=data, timeout=120) as response:
+    
+    # === ВОТ ЭТОТ КОД РЕШАЕТ ОШИБКУ НА MAC ===
+    context = ssl._create_unverified_context()
+    
+    with urllib.request.urlopen(req, data=data, timeout=120, context=context) as response:
         return json.loads(response.read().decode("utf-8"))
 
 # Функция для конвертации HTML с сервера в красивый текст для Телеграма
@@ -62,20 +67,17 @@ async def handle_web_app_data(message: Message):
     
     try:
         payload = json.loads(data)
-        # Если пришел запрос на генерацию от нового фронтенда
         if payload.get("action") == "generate_route":
             api_params = payload.get("params", {})
             dest = api_params.get("destination", "Город")
             days = api_params.get("days", "?")
             
-            # Мгновенный ответ пользователю
             await message.answer(
                 f"⏳ <b>Принято!</b>\nНачинаю составлять маршрут: <b>{dest} на {days} дней</b>.\n\n"
-                f"Это займет около 30-40 секунд. Можешь свернуть бота или заблокировать телефон, я пришлю гид автоматически, как только он будет готов! 🚀",
+                f"Это займет около 30-40 секунд. Можешь свернуть бота или заблокировать телефон, я пришлю гид автоматически! 🚀",
                 parse_mode=ParseMode.HTML
             )
             
-            # Запускаем тяжелый запрос в фоновом потоке, чтобы бот не "зависал"
             try:
                 response_data = await asyncio.to_thread(fetch_route_sync, api_params)
                 route_html = response_data.get("html_content", "")
@@ -84,10 +86,8 @@ async def handle_web_app_data(message: Message):
                     await message.answer("❌ Извините, не удалось сгенерировать маршрут. Попробуйте еще раз.")
                     return
                 
-                # Форматируем и добавляем заголовок
                 route_text = f"<b>Маршрут: {dest} ({days} дн.)</b>\n\n" + format_for_telegram(route_html)
                 
-                # Отправляем кусками (если текст слишком большой для Телеграма)
                 if len(route_text) > 4000:
                     for x in range(0, len(route_text), 4000):
                         await message.answer(route_text[x:x+4000], parse_mode=ParseMode.HTML)
@@ -95,14 +95,14 @@ async def handle_web_app_data(message: Message):
                     await message.answer(route_text, parse_mode=ParseMode.HTML)
             except Exception as e:
                 print(f"Ошибка API: {e}")
-                await message.answer("❌ Произошла ошибка при составлении маршрута. Попробуйте чуть позже.")
+                await message.answer("❌ Произошла ошибка при составлении маршрута. Сервер не ответил вовремя.")
             return
 
     except json.JSONDecodeError:
-        pass # Защита от старых кэшированных сообщений
+        pass
 
 async def main():
-    print("Бот с фоновой генерацией запущен!")
+    print("Бот запущен. Проверка SSL отключена!")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
