@@ -16,46 +16,46 @@ def _extract_json(text: str) -> str:
     if start >= 0 and end > start: return text[start : end + 1]
     return text
 
-# --- ФУНКЦИЯ ЗАПРОСА К ЯНДЕКС КАРТАМ ---
+# --- ФУНКЦИЯ ЯНДЕКСА С ЧЕТКИМИ ОТВЕТАМИ ОБ ОШИБКАХ ---
 def get_yandex_coords(query: str, api_key: str) -> str:
     if not api_key:
-        return "" # Если ключа нет, возвращаем пустоту
+        return "📍 <i>[Нет ключа Яндекса]</i>"
     try:
         url = f"https://geocode-maps.yandex.ru/1.x/?apikey={api_key}&geocode={urllib.parse.quote(query)}&format=json"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=5) as response:
             res = json.loads(response.read().decode('utf-8'))
-            # Яндекс возвращает координаты в формате "Долгота Широта"
-            pos = res["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"]
+            features = res.get("response", {}).get("GeoObjectCollection", {}).get("featureMember", [])
+            
+            if not features:
+                return "📍 <i>[Место не найдено]</i>"
+                
+            pos = features[0]["GeoObject"]["Point"]["pos"]
             lon, lat = pos.split(" ")
-            # Округляем до 5 знаков после запятой
-            return f"({round(float(lat), 5)}, {round(float(lon), 5)})"
+            return f"📍 <b>({round(float(lat), 5)}, {round(float(lon), 5)})</b>"
     except Exception as e:
-        print(f"Yandex Geocode Error for '{query}': {e}")
-        return ""
+        print(f"Yandex Error for '{query}': {e}")
+        return "📍 <i>[Ошибка связи с Яндексом]</i>"
 
 def generate_route_with_gpt(req: RouteRequest) -> RouteResponse:
     api_key = os.getenv("OPENAI_API_KEY")
-    yandex_key = os.getenv("YANDEX_API_KEY") # <--- Ключ от Яндекса
+    yandex_key = os.getenv("YANDEX_API_KEY") # Проверяем ключ
     
     client = OpenAI(api_key=api_key, timeout=60.0)
 
-    # --- ИНСТРУКЦИЯ ДЛЯ ИИ ---
+    # --- ИНСТРУКЦИЯ (ТЕПЕРЬ С ФИГУРНЫМИ СКОБКАМИ) ---
     system = (
         "Ты — профессиональный гид-логист.\n"
         "СТРОГИЕ ПРАВИЛА:\n"
-        "1. Минимум 3 ГЛАВНЫЕ ДОСТОПРИМЕЧАТЕЛЬНОСТИ на каждый день.\n"
-        "2. КООРДИНАТЫ: ЗАПРЕЩЕНО писать координаты цифрами! Рядом с названием КАЖДОГО места ты ОБЯЗАН поставить тег [GEO: Название места, Город].\n"
-        "   Пример: <b>Красная Площадь</b> [GEO: Красная Площадь, Москва].\n"
-        "3. ЛОГИСТИКА: Между локациями обязательно пиши, как добраться.\n"
-        "   ПРАВИЛО ПЕШЕХОДА: Если идти менее 30 минут, ПРЕДЛАГАЙ ТОЛЬКО ПЕШУЮ ПРОГУЛКУ. ЗАПРЕЩЕНО предлагать такси для коротких расстояний.\n"
+        "1. Минимум 3 ДОСТОПРИМЕЧАТЕЛЬНОСТИ в день.\n"
+        "2. КООРДИНАТЫ: ЗАПРЕЩЕНО писать координаты цифрами! Рядом с названием КАЖДОГО места ты ОБЯЗАН поставить тег {GEO: Название места, Город}. Используй ФИГУРНЫЕ скобки!\n"
+        "   Пример: <b>Красная Площадь</b> {GEO: Красная Площадь, Москва}.\n"
+        "3. ЛОГИСТИКА: Если идти менее 30 минут, ПРЕДЛАГАЙ ТОЛЬКО ПЕШУЮ ПРОГУЛКУ.\n"
         "4. Формат вывода — строго HTML.\n\n"
         "ШАБЛОН ДНЯ:\n"
         "<h3>День X: [Название дня]</h3>\n"
-        "<p><b>1. [Место]</b> [GEO: Место, Город]. [Подробное описание: история, цены].</p>\n"
+        "<p><b>1. [Место]</b> {GEO: Место, Город}. [Описание].</p>\n"
         "<p><i>👣 Как добраться: [Инструкция. Если <30 мин - 'Пешком X минут'].</i></p>\n"
-        "<p><b>2. [Место]</b> [GEO: Место, Город]. [Описание...]</p>\n\n"
-        "В конце добавь блок <h2>Полезные советы</h2>.\n"
         "Верни JSON с полем 'html_content'."
     )
 
@@ -76,17 +76,15 @@ def generate_route_with_gpt(req: RouteRequest) -> RouteResponse:
     data = json.loads(_extract_json(resp.choices[0].message.content))
     html = data.get("html_content", "")
 
-    # --- ЗАМЕНЯЕМ ТЕГИ [GEO: ...] НА РЕАЛЬНЫЕ КООРДИНАТЫ ---
+    # --- ЖЕЛЕЗОБЕТОННАЯ ЗАМЕНА ТЕГОВ НА КООРДИНАТЫ ---
     if html:
-        # Находим все теги вида [GEO: Что-то там]
-        geo_tags = set(re.findall(r'$$GEO:(.*?)$$', html))
-        for tag in geo_tags:
-            query = tag.strip()
-            # Запрашиваем Яндекс
-            coords = get_yandex_coords(query, yandex_key)
-            # Заменяем тег в тексте на координаты (или на пустоту, если не нашли)
-            html = html.replace(f"[GEO:{tag}]", coords)
-            
+        def replacer(match):
+            query = match.group(1).strip()
+            print(f"Ищем координаты для: {query}") # Это будет видно в логах Render
+            return get_yandex_coords(query, yandex_key)
+
+        # Ищем все вхождения {GEO: ...} и заменяем их через функцию replacer
+        html = re.sub(r'\{GEO:(.*?)\}', replacer, html)
         data["html_content"] = html
 
     return RouteResponse(
