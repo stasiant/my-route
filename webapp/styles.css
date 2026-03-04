@@ -60,7 +60,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 20px 24px 50px 24px;
+  padding: 20px 24px 20px 24px;
 }
 
 .welcome-header {
@@ -88,14 +88,15 @@ body {
 
 .welcome-text-block {
   margin-top: auto; 
-  margin-bottom: 20px;
+  /* ПОДНИМАЕМ БЛОК ВЫШЕ ОТ НИЗА ЭКРАНА */
+  margin-bottom: 12vh; 
 }
 
 .welcome-title {
   color: #ffffff;
-  font-size: 32px; /* Чуть уменьшен для длинной фразы */
+  font-size: 32px; 
   font-weight: 800;
-  line-height: 1.2; /* Увеличен интервал для читаемости */
+  line-height: 1.2; 
   margin: 0 0 16px 0;
   text-shadow: 0 2px 10px rgba(0,0,0,0.4);
 }

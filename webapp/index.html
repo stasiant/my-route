@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>My Route</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=INLINE_JS_1" />
+    <link rel="stylesheet" href="./styles.css?v=TEXT_UP" />
   </head>
   <body>
     <!-- ЭКРАН ПРИВЕТСТВИЯ -->
@@ -17,17 +17,17 @@
             <button id="langToggle" class="welcome-lang">RU</button>
         </header>
         <div class="welcome-text-block">
-            <h1 class="welcome-title">Путешествия — это разговор с миром, который отвечает тебе впечатлениями.</h1>
+            <!-- ИСПРАВЛЕННЫЙ ТЕКСТ -->
+            <h1 class="welcome-title">Путешествие — это разговор с миром, который отвечает тебе впечатлениями.</h1>
             <p class="welcome-subtitle">Ваш персональный редактор путешествий создаст идеальную историю поездки.</p>
             <button id="btnStart" class="welcome-btn">Начать</button>
         </div>
       </div>
     </section>
 
-    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ (ФОРМА И РЕЗУЛЬТАТ) -->
+    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
     <main class="container">
       
-      <!-- FORM -->
       <section id="screenForm" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <button id="backBtn" class="ios-link">Отмена</button>
@@ -79,7 +79,6 @@
         <button id="btnGen" class="ios-btn">Создать историю</button>
       </section>
 
-      <!-- RESULT -->
       <section id="screenResult" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h2 style="margin:0; font-size:24px;">Ваш гид</h2>
@@ -97,7 +96,6 @@
       </section>
     </main>
 
-    <!-- ВЕСЬ JAVASCRIPT ТЕПЕРЬ ЗДЕСЬ (Не нужен внешний файл) -->
     <script>
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.ready(); tg.expand(); }
@@ -110,7 +108,6 @@
     let lang = "ru";
     let currentRouteHTML = "";
 
-    // Функция переключения экранов
     function show(id) {
         document.getElementById("screenWelcome").classList.add("hidden");
         document.getElementById("screenForm").classList.add("hidden");
@@ -119,14 +116,12 @@
         window.scrollTo(0,0);
     }
 
-    // Подготовка текста для Telegram
     function formatForTelegram(html) {
       let text = html.replace(/<h2>(.*?)<\/h2>/gi, "\n\n<b>===== $1 =====</b>\n");
       text = text.replace(/<h3>(.*?)<\/h3>/gi, "\n\n<b>🗓 $1</b>\n").replace(/<b>(.*?)<\/b>/gi, "<b>$1</b>");
       return text.replace(/<i>(.*?)<\/i>/gi, "<i>$1</i>").replace(/<p>/gi, "").replace(/<\/p>/gi, "\n").replace(/<br>/gi, "\n").trim();
     }
 
-    // Генерация маршрута
     async function generate() {
       const btn = document.getElementById("btnGen");
       const dest = document.getElementById("destination").value;
@@ -148,7 +143,6 @@
         const data = await res.json();
         let html = data.html_content || "";
         
-        // Фоллбэк на старый формат сервера
         if (!html && data.daily_plan) {
             data.daily_plan.forEach(d => {
                 html += `<h3>День ${d.day}</h3>`;
@@ -170,7 +164,6 @@
       }
     }
 
-    // НАЗНАЧЕНИЕ КНОПОК ПРЯМО ЗДЕСЬ И СЕЙЧАС (без window.onload)
     document.getElementById("btnStart").onclick = () => show("screenForm");
     document.getElementById("backBtn").onclick = () => show("screenWelcome");
     document.getElementById("newBtn").onclick = () => show("screenForm");
